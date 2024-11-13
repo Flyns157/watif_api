@@ -1,0 +1,5 @@
+pymongo
+pydantic
+flask
+flask-jwt-extended
+pillow
