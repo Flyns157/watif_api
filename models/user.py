@@ -4,6 +4,7 @@ from pydantic import EmailStr
 from datetime import date
 from pathlib import Path
 from models.interest import Interest
+from models.role import Role
 from utils.database import get_database
 import bcrypt
 from dtos.user_dto import UserDTO
@@ -17,7 +18,7 @@ db = get_database()
 @dataclass
 class User:
     _id: ObjectId = field(default_factory=lambda: None)  # Par défaut None, MongoDB l’attribuera automatiquement
-    role: ObjectId
+    id_role: ObjectId
     username: str
     password: str | bytes
     email: EmailStr
@@ -29,7 +30,7 @@ class User:
     blocked: list[ObjectId] = field(default_factory=list)
     interests: list[ObjectId] = field(default_factory=list)
     description: str = ""
-    status: str = "new"
+    status: str = ""
 
     def __post_init__(self):
         # Chiffrer le mot de passe si non chiffré
@@ -57,11 +58,14 @@ class User:
             db.users.delete_one({"_id": self._id})
 
     def update(self, **kwargs) -> None:
-        editable = set(self.__dict__.keys()) - {"email", "name", "surname", "birth_date"}
+        editable = set(self.__dict__.keys()) - {"_id", "email", "name", "surname", "birth_date"}
         for k, v in kwargs:
             if k in editable:
                 self.__setattr__(k, v)
         self.save()
+
+    def get_role(self) -> Role:
+        return Role.get_by_id(self.id_role)
 
     def get_followed(self) -> list['User']:
         return [User.get_by_id(user_id) for user_id in self.followed]
@@ -72,7 +76,7 @@ class User:
     def get_interests(self) -> list[Interest]:
         return [Interest.get_by_id(user_id) for user_id in self.followed]
 
-    def get_pp(self):
+    def get_pp(self) -> Image:
         return Image(Config.MEDIA_PATH / self.pp)
 
     @staticmethod
@@ -83,7 +87,7 @@ class User:
                 return User(**data)
             # Conversions pour assurer que chaque champ est du bon type
             data["_id"] = ObjectId(data["_id"])
-            data["role"] = ObjectId(data["role"])
+            data["id_role"] = ObjectId(data["id_role"])
             data["email"] = EmailStr(data.get("email", None))
             data["pp"] = Path(data.get("pp", None))
             data["birth_date"] = date.fromisoformat(data["birth_date"]) if isinstance(data["birth_date"], str) else data["birth_date"]
@@ -102,19 +106,19 @@ class User:
         return None
 
     @staticmethod
-    def all() -> Generator['User']:
-        return (User(**user) for user in db.users.find())
+    def all(**kwargs) -> Generator['User']:
+        return (User(**user) for user in db.users.find(kwargs))
 
     def to_dto(self) -> UserDTO:
         return UserDTO(
             id=str(self._id),
-            role=str(self.role),
+            role=str(self.id_role),
             username=self.username,
             mail=self.mail,
             name=self.name,
             surname=self.surname,
             pp=self.pp,
-            birthDate=self.birthDate,
+            birth_date=self.birth_date,
             followed=[str(f) for f in self.followed],
             blocked=[str(b) for b in self.blocked],
             interests=[str(i) for i in self.interests],

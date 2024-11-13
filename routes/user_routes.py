@@ -3,9 +3,9 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from models.user import User
 from bson import ObjectId
 
-user_bp = Blueprint("user_bp", __name__, url_prefix="/api/users")
+user_bp = Blueprint("user_bp", __name__, url_prefix="/api")
 
-@user_bp.route("/<user_id>", methods=["GET"])
+@user_bp.route("/user/<user_id>", methods=["GET"])
 def get_user(user_id):
     user = User.get_by_id(user_id)
     if user:
@@ -14,7 +14,7 @@ def get_user(user_id):
     else:
         return jsonify({"error": "User not found"}), 404
 
-@user_bp.route("/users", methods=["POST"])
+@user_bp.route("/register", methods=["POST"])
 def create_user():
     data = request.json
     user = User(**data)
@@ -22,17 +22,16 @@ def create_user():
     user_dto = user.to_dto()  # Conversion en DTO avant envoi
     return jsonify(user_dto.model_dump()), 201
 
-@user_bp.route('/<user_id>', methods=['PUT'])
+@user_bp.route('/user/<user_id>', methods=['PUT'])
 @jwt_required()
 def update_user(user_id):
     current_user_id = get_jwt_identity()
-
-    # Vérifiez que l'utilisateur modifie ses propres informations
-    if current_user_id != user_id:
-        return jsonify({"error": "Unauthorized access"}), 403
-
     data = request.get_json()
     user = User.get_by_id(ObjectId(user_id))
+
+    # Vérifiez que l'utilisateur modifie ses propres informations
+    if current_user_id != user_id and user.get_role().name != 'admin':
+        return jsonify({"error": "Unauthorized access"}), 403
 
     if user:
         user.update(**data)  # Assurez-vous que la méthode `update` gère les mises à jour de manière sécurisée
@@ -40,7 +39,7 @@ def update_user(user_id):
     else:
         return jsonify({"error": "User not found"}), 404
 
-@user_bp.route("/<user_id>", methods=["DELETE"])
+@user_bp.route("/user/<user_id>", methods=["DELETE"])
 def delete_user(user_id):
     user = User.get_by_id(ObjectId(user_id))
     if user:
