@@ -53,5 +53,5 @@ class Comment:
         return None
 
     @staticmethod
-    def all(**kwargs) -> Generator['User']:
-        return (Comment(**post) for post in db.posts.find({**kwargs, "title": {"$exists": False}}))
+    def all(limit: int = 30, **kwargs) -> Generator['User']:
+        return (Comment(**post) for post in db.posts.find({**kwargs, "title": {"$exists": False}}).limit(limit))

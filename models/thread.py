@@ -51,5 +51,5 @@ class Thread:
         return None
 
     @staticmethod
-    def all(**kwargs) -> Generator['User']:
-        return (User(**thread) for thread in db.threads.find(kwargs))
+    def all(limit: int = 30, **kwargs) -> Generator['User']:
+        return (User(**thread) for thread in db.threads.find(kwargs).limit(limit))

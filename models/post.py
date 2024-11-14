@@ -56,5 +56,5 @@ class Post:
         return None
 
     @staticmethod
-    def all(**kwargs) -> Generator['User']:
-        return (Post(**post) for post in db.posts.find({**kwargs, "title": {"$exists": True}}))
+    def all(limit: int = 30, **kwargs) -> Generator['User']:
+        return (Post(**post) for post in db.posts.find({**kwargs, "title": {"$exists": True}}).limit(limit))

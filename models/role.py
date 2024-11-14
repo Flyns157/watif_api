@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from bson import ObjectId
 from utils.database import get_database
+from typing import Generator
 
 db = get_database()
 
@@ -42,3 +43,7 @@ class Role:
         if data:
             return Role(**data)
         return None
+
+    @staticmethod
+    def all(limit: int = 30, **kwargs) -> Generator['Role']:
+        return (Role(**key) for key in db.roles.find(kwargs).limit(limit))

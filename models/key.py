@@ -36,5 +36,5 @@ class Key:
         return None
 
     @staticmethod
-    def all(**kwargs) -> Generator['Key']:
-        return (Key(**key) for key in db.keys.find(kwargs))
+    def all(limit: int = 30, **kwargs) -> Generator['Key']:
+        return (Key(**key) for key in db.keys.find(kwargs).limit(limit))
