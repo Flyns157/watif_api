@@ -7,7 +7,7 @@ from models.interest import Interest
 from models.role import Role
 from utils.database import get_database
 import bcrypt
-from dtos.user_dto import UserDTO
+from dtos.user_dto import PublicUserDTO, PrivateUserDTO
 from ..app import Config
 from PIL.Image import Image
 from typing import Generator
@@ -58,10 +58,13 @@ class User:
             db.users.delete_one({"_id": self._id})
 
     def update(self, **kwargs) -> None:
-        editable = set(self.__dict__.keys()) - {"_id", "email", "name", "surname", "birth_date"}
-        for k, v in kwargs:
-            if k in editable:
-                self.__setattr__(k, v)
+        editable_fields = set(self.__dict__.keys()) - {"_id", "email", "name", "surname", "birth_date"}
+        for k, v in kwargs.items():
+            if k in editable_fields:
+                if k == "password":  # Hash le mot de passe si nécessaire
+                    self.password = self.hash_password(v)
+                else:
+                    setattr(self, k, v)
         self.save()
 
     def get_role(self) -> Role:
@@ -109,19 +112,32 @@ class User:
     def all(**kwargs) -> Generator['User']:
         return (User(**user) for user in db.users.find(kwargs))
 
-    def to_dto(self) -> UserDTO:
-        return UserDTO(
-            id=str(self._id),
-            role=str(self.id_role),
-            username=self.username,
-            mail=self.mail,
-            name=self.name,
-            surname=self.surname,
-            pp=self.pp,
-            birth_date=self.birth_date,
-            followed=[str(f) for f in self.followed],
-            blocked=[str(b) for b in self.blocked],
-            interests=[str(i) for i in self.interests],
-            description=self.description,
-            status=self.status
-        )
+    def to_dto(self, private: bool = False) -> PublicUserDTO | PrivateUserDTO:
+        if private:
+            return PrivateUserDTO(
+                id=str(self._id),
+                role=str(self.id_role),
+                username=self.username,
+                email=self.email,
+                name=self.name,
+                surname=self.surname,
+                pp=self.pp,
+                birth_date=self.birth_date,
+                followed=[str(f) for f in self.followed],
+                blocked=[str(b) for b in self.blocked],
+                interests=[str(i) for i in self.interests],
+                description=self.description,
+                status=self.status
+            )
+        else:
+            return PublicUserDTO(
+                id=str(self._id),
+                role=str(self.id_role),
+                username=self.username,
+                pp=self.pp,
+                birth_date=self.birth_date,
+                followed=[str(f) for f in self.followed],
+                interests=[str(i) for i in self.interests],
+                description=self.description,
+                status=self.status
+            )
