@@ -11,6 +11,7 @@ from dtos.user_dto import PublicUserDTO, PrivateUserDTO
 from ..app import Config
 from PIL.Image import Image
 from typing import Generator
+from utils.helpers import isobjectid
 
 
 db = get_database()
@@ -63,6 +64,8 @@ class User:
             if k in editable_fields:
                 if k == "password":  # Hash le mot de passe si nécessaire
                     self.password = self.hash_password(v)
+                elif k == "role" and not isobjectid(v):
+                    self.role = Role.get_by_name(v)._id
                 else:
                     setattr(self, k, v)
         self.save()
@@ -107,16 +110,18 @@ class User:
         if data:
             return User(**data)
         return None
-
+    
     @staticmethod
-    def all(**kwargs) -> Generator['User']:
-        return (User(**user) for user in db.users.find(kwargs))
+    def all(limit: int = 30, **kwargs) -> Generator['User']:
+        # Récupère les utilisateurs selon les filtres et la limite
+        if 'role' in kwargs and not isobjectid(kwargs['role']) : kwargs['role'] = Role.get_by_name(kwargs['role'])._id
+        return (User(**user) for user in db.users.find(kwargs).limit(limit))
 
     def to_dto(self, private: bool = False) -> PublicUserDTO | PrivateUserDTO:
         if private:
             return PrivateUserDTO(
                 id=str(self._id),
-                role=str(self.id_role),
+                role=str(self.get_role().name),
                 username=self.username,
                 email=self.email,
                 name=self.name,
@@ -132,7 +137,7 @@ class User:
         else:
             return PublicUserDTO(
                 id=str(self._id),
-                role=str(self.id_role),
+                role=str(self.get_role().name),
                 username=self.username,
                 pp=self.pp,
                 birth_date=self.birth_date,
