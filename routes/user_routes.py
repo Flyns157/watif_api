@@ -2,7 +2,6 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from models.user import User
 from bson import ObjectId
-from pydantic import ValidationError
 
 user_bp = Blueprint("user_bp", __name__, url_prefix="/api")
 
@@ -32,15 +31,28 @@ def create_user():
 @jwt_required()
 def update_user(user_id):
     current_user_id = get_jwt_identity()
-    data = request.get_json()
     user = User.get_by_id(ObjectId(user_id))
+    
+    # Gestion des erreurs pour le format de la donnée reçue
+    try:
+        data = request.get_json()
+        if not isinstance(data, dict):
+            return jsonify({"error": "Invalid input format; expected a JSON object"}), 400
+    except Exception:
+        return jsonify({"error": "Invalid JSON input"}), 400
 
-    # Vérifiez que l'utilisateur modifie ses propres informations
-    if current_user_id != user_id and user.get_role().name != 'admin':
-        return jsonify({"error": "Unauthorized access"}), 403
+    user_role = user.get_role().name
+    if user_role != 'admin':
+        if "role" in data:
+            return jsonify({"error": "You are not authorized to modify the role"}), 403
+        
+        # Si l'utilisateur essaie de modifier un autre compte que le sien
+        if current_user_id != user_id:
+            return jsonify({"error": "Unauthorized access"}), 403
 
+    # Mettre à jour les informations de l'utilisateur
     if user:
-        user.update(**data)  # Assurez-vous que la méthode `update` gère les mises à jour de manière sécurisée
+        user.update(**data)
         return jsonify({"message": "User updated successfully"}), 200
     else:
         return jsonify({"error": "User not found"}), 404
