@@ -43,6 +43,42 @@ class Thread:
     def get_posts(self) -> list[Post]:
         return [Post(**post) for post in db.posts.find({"id_thread": self._id})]
 
+    def add_member(self, id_user: ObjectId) -> bool:
+        if id_user in self.members:
+            return False
+        self.members.append(id_user)
+        self.save()
+        return True
+
+    def del_member(self, id_user: ObjectId) -> bool:
+        if id_user not in self.members:
+            return False
+        self.members.remove(id_user)
+        self.save()
+        return True
+
+    def add_admin(self, id_user: ObjectId) -> bool:
+        if id_user in self.admins:
+            return False
+        self.admins.append(id_user)
+        self.save()
+        return True
+
+    def del_admin(self, id_user: ObjectId) -> bool:
+        if id_user not in self.admins:
+            return False
+        self.admins.remove(id_user)
+        self.save()
+        return True
+
+    def make_public(self, id_user: ObjectId) -> None:
+        self.public = True
+        self.save()
+
+    def make_private(self, id_user: ObjectId) -> None:
+        self.public = False
+        self.save()
+
     @staticmethod
     def get_by_id(thread_id: str | ObjectId) -> 'Thread' | None:
         data = db.threads.find_one({"_id": thread_id})
