@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import os
 from bson import ObjectId
 from pydantic import EmailStr
 from datetime import date
@@ -11,7 +12,9 @@ from dtos.user_dto import PublicUserDTO, PrivateUserDTO
 from ..app import Config
 from PIL.Image import Image
 from typing import Generator
-from utils.helpers import isobjectid
+from utils.helpers import allowed_file, isobjectid
+from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
 
 
 db = get_database()
@@ -122,7 +125,7 @@ class User:
             if k in editable_fields:
                 if k == "password":
                     self.password = self.hash_password(v)
-                elif k == "role" and not isobjectid(v):
+                elif k == "role" and Role.get_by_name(v):
                     self.role = Role.get_by_name(v)._id
                 else:
                     setattr(self, k, v)
@@ -225,6 +228,20 @@ class User:
         if 'role' in kwargs and not isobjectid(kwargs['role']):
             kwargs['role'] = Role.get_by_name(kwargs['role'])._id
         return (User(**user) for user in db.users.find(kwargs).limit(limit))
+
+    def set_pp(self, folder: Path, file: FileStorage) -> None:
+        """Set the user's profile picture.
+        
+        Args:
+            folder: The folder in which to save the image.
+            file: The new "PP" in a Flask (FileStorage) object.
+        """
+        if not allowed_file(file.filename):
+            raise ValueError("error: Invalid file format")
+        pp_path = os.path.join(folder, secure_filename(file.filename))
+        file.save(pp_path)
+        self.pp = pp_path
+        self.save()
 
     def to_dto(self, private: bool = False) -> PublicUserDTO | PrivateUserDTO:
         """Convert the user to a data transfer object (DTO) for external use.
