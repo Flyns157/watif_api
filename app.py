@@ -6,6 +6,11 @@ from datetime import timedelta
 from models.user import User
 from config import Config
 import logging
+import os
+
+# Configurer le dossier de stockage des images
+UPLOAD_FOLDER = os.path.join('static', 'profile_pics')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Create a logger
 logger = logging.getLogger(__name__)
@@ -30,6 +35,7 @@ class WatifAPI(Flask):
         self.config["JWT_SECRET_KEY"] = Config.SECRET_KEY
         self.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=Config.TOKEN_EXPIRES)  # Durée de validité du token
         self.jwt = JWTManager()
+        self.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
         @self.route('/login', methods=['POST'])
         def login():

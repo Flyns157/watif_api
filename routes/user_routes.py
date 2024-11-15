@@ -1,8 +1,14 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_from_directory
 from flask_jwt_extended import get_jwt_identity, jwt_required
+from werkzeug.utils import secure_filename
 from models.user import User
 from bson import ObjectId
 from ..app import logger
+import os
+
+def allowed_file(filename: str) -> bool:
+    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 user_bp = Blueprint("user_bp", __name__, url_prefix="/api")
 
@@ -25,9 +31,39 @@ def get_user(user_id):
 
 @user_bp.route("/register", methods=["POST"])
 def create_user():
-    data = request.json
-    logger.info(f"POST /register - Creating new user with data: {data}")
-    user = User(**data)
+    # Gestion des erreurs pour le format de la donnée reçue
+    try:
+        data = request.get_json()
+        if not isinstance(data, dict):
+            logger.error(f"Invalid input format - Expected a JSON object to create user: {data}")
+            return jsonify({"error": "Invalid input format; expected a JSON object"}), 400
+        logger.info(f"POST /register - Creating new user with data: {data}")
+    except Exception as e:
+        logger.error(f"POST /register - Atempt to create new user with bad format data: {e}")
+        return jsonify({"error": "Invalid JSON input"}), 400
+    
+    try:
+        user = User(**data)
+    except Exception as e:
+        logger.error(f"Something went wrong during creation of an user object : {e}")
+        return jsonify({"error": "Invalid JSON input"}), 400
+    
+    # Vérifie si une image est fournie
+    if len(request.files):
+        pp_file = request.files[next(request.files.keys())]
+        
+        # Vérifie le type de fichier
+        # if pp_file.filename == '':
+        #     return jsonify({"error": "No selected file"}), 400
+        if pp_file and allowed_file(pp_file.filename):
+            pp_path = os.path.join(user_bp.config['UPLOAD_FOLDER'], secure_filename(pp_file.filename))
+            pp_file.save(pp_path)
+
+            # Ajoute le chemin de l'image au dictionnaire des données
+            data['pp'] = pp_path
+        else:
+            return jsonify({"error": "Invalid file format"}), 400
+    
     user.save()
     user_dto = user.to_dto()  # Conversion en DTO avant envoi
     logger.info(f"User created successfully - ID: {user._id}")
@@ -49,20 +85,35 @@ def update_user(user_id):
     except Exception:
         logger.error(f"Invalid JSON input")
         return jsonify({"error": "Invalid JSON input"}), 400
-
-    user_role = user.get_role().name
-    if user_role != 'admin':
-        if "role" in data:
-            logger.error(f"Unauthorized attempt to modify role - User ID: {user_id}")
-            return jsonify({"error": "You are not authorized to modify the role"}), 403
+    
+    # Vérifie si une image est fournie
+    if len(request.files):
+        pp_file = request.files[next(request.files.keys())]
         
-        # Si l'utilisateur essaie de modifier un autre compte que le sien
-        if current_user_id != user_id:
-            logger.error(f"Unauthorized access - User ID: {user_id}")
-            return jsonify({"error": "Unauthorized access"}), 403
+        # Vérifie le type de fichier
+        # if pp_file.filename == '':
+        #     return jsonify({"error": "No selected file"}), 400
+        if pp_file and allowed_file(pp_file.filename):
+            pp_path = os.path.join(user_bp.config['UPLOAD_FOLDER'], secure_filename(pp_file.filename))
+            pp_file.save(pp_path)
+
+            # Ajoute le chemin de l'image au dictionnaire des données
+            data['pp'] = pp_path
+        else:
+            return jsonify({"error": "Invalid file format"}), 400
 
     # Mettre à jour les informations de l'utilisateur
     if user:
+        if user.get_role().name != 'admin':
+            if "role" in data:
+                logger.error(f"Unauthorized attempt to modify role - User ID: {user_id}")
+                return jsonify({"error": "You are not authorized to modify the role"}), 403
+            
+            # Si l'utilisateur essaie de modifier un autre compte que le sien
+            if current_user_id != user_id:
+                logger.error(f"Unauthorized access - User ID: {user_id}")
+                return jsonify({"error": "Unauthorized access"}), 403
+
         user.update(**data)
         logger.info(f"User {user_id} updated successfully")
         return jsonify({"message": "User updated successfully"}), 200
@@ -237,3 +288,11 @@ def get_users():
         ).model_dump()
         for user in users
     ]), 200
+
+@user_bp.route('/user/<user_id>/pp', methods=['GET'])
+def get_pp(user_id):
+    user = User.get_by_id(ObjectId(user_id))
+    if user and user.pp:
+        return send_from_directory(user_bp.config['UPLOAD_FOLDER'], os.path.basename(user.pp))
+    else:
+        return jsonify({"error": "Profile picture not found"}), 404

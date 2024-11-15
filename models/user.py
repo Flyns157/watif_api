@@ -62,16 +62,13 @@ class User:
     email: EmailStr
     name: str
     surname: str
-    pp: Path
+    pp: Path = field(default_factory=Path("base_image.png"))
     birth_date: date
     followed: list[ObjectId] = field(default_factory=list)
     blocked: list[ObjectId] = field(default_factory=list)
     interests: list[ObjectId] = field(default_factory=list)
     description: str = ""
     status: str = ""
-@dataclass
-class User:
-    # ...
 
     def __post_init__(self):
         """Encrypt the user's password after initialization if it's not already hashed."""
