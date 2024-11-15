@@ -13,7 +13,7 @@ class Thread:
     name: str
     public: bool
     id_owner: ObjectId
-    admins: list[ObjectId] = field(default_factory=list)
+    moderators: list[ObjectId] = field(default_factory=list)
     members: list[ObjectId] = field(default_factory=list)
 
     def save(self) -> None:
@@ -34,8 +34,8 @@ class Thread:
                 self.__setattr__(k, v)
         self.save()
 
-    def get_admins(self) -> list[User]:
-        return [User.get_by_id(user_id) for user_id in self.admins]
+    def get_moderators(self) -> list[User]:
+        return [User.get_by_id(user_id) for user_id in self.moderators]
 
     def get_members(self) -> list[User]:
         return [User.get_by_id(user_id) for user_id in self.members]
@@ -57,25 +57,25 @@ class Thread:
         self.save()
         return True
 
-    def add_admin(self, id_user: ObjectId) -> bool:
-        if id_user in self.admins:
+    def add_moderator(self, id_user: ObjectId) -> bool:
+        if id_user in self.moderators:
             return False
-        self.admins.append(id_user)
+        self.moderators.append(id_user)
         self.save()
         return True
 
-    def del_admin(self, id_user: ObjectId) -> bool:
-        if id_user not in self.admins:
+    def del_moderator(self, id_user: ObjectId) -> bool:
+        if id_user not in self.moderators:
             return False
-        self.admins.remove(id_user)
+        self.moderators.remove(id_user)
         self.save()
         return True
 
-    def make_public(self, id_user: ObjectId) -> None:
+    def make_public(self) -> None:
         self.public = True
         self.save()
 
-    def make_private(self, id_user: ObjectId) -> None:
+    def make_private(self) -> None:
         self.public = False
         self.save()
 
