@@ -29,9 +29,11 @@ class Thread:
 
     def update(self, **kwargs) -> None:
         editable = set(self.__dict__.keys()) - {"_id", "id_owner"}
-        for k, v in kwargs:
+        for k, v in kwargs.items():
             if k in editable:
                 self.__setattr__(k, v)
+            else:
+                raise ValueError(f"Field '{k}' is not editable")
         self.save()
 
     def get_moderators(self) -> list[User]:
@@ -87,5 +89,5 @@ class Thread:
         return None
 
     @staticmethod
-    def all(limit: int = 30, **kwargs) -> Generator['User']:
-        return (User(**thread) for thread in db.threads.find(kwargs).limit(limit))
+    def all(limit: int = 30, **kwargs) -> Generator['Thread']:
+        return (Thread(**thread) for thread in db.threads.find(kwargs).limit(limit))
