@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 import os
 from bson import ObjectId
-from pydantic import EmailStr
+from pydantic import EmailStr, ValidationError
 from datetime import date
 from pathlib import Path
 from models.interest import Interest
@@ -280,3 +280,9 @@ class User:
                 description=self.description,
                 status=self.status
             )
+
+    def validate_email(self):
+        try:
+            EmailStr.validate(self.email)
+        except ValidationError:
+            raise ValueError("Invalid email format")
