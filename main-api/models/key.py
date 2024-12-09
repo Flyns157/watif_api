@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from bson import ObjectId
-from utils.database import get_database
+from ..utils.database import get_database
 from typing import Generator
 
 db = get_database()
@@ -22,14 +22,14 @@ class Key:
             db.keys.delete_one({"_id": self._id})
 
     @staticmethod
-    def get_by_id(key_id: str | ObjectId) -> 'Key' | None:
+    def get_by_id(key_id: str | ObjectId) -> 'Key | None':
         data = db.keys.find_one({"_id": key_id})
         if data:
             return Key(**data)
         return None
 
     @staticmethod
-    def get_by_name(key_name: str | ObjectId) -> 'Key' | None:
+    def get_by_name(key_name: str | ObjectId) -> 'Key | None':
         data = db.keys.find_one({"name": key_name})
         if data:
             return Key(**data)

@@ -3,11 +3,11 @@ from typing import Generator
 from bson import ObjectId
 from datetime import datetime
 from pathlib import Path
-from models.key import Key
+from .key import Key
 from PIL.Image import Image
-from models.user import User
-from models.comment import Comment
-from utils.database import get_database
+from .user import User
+from .comment import Comment
+from ..utils.database import get_database
 from ..utils.config import Config
 
 db = get_database()
@@ -49,7 +49,7 @@ class Post:
         return [Image(Config.MEDIA_PATH / image) for image in self.medias]
 
     @staticmethod
-    def get_by_id(user_id: str | ObjectId) -> 'Post' | None:
+    def get_by_id(user_id: str | ObjectId) -> 'Post | None':
         data = db.posts.find_one({"_id": user_id})
         if data:
             return Post(**data)

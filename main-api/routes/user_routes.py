@@ -4,7 +4,7 @@ from pydantic import ValidationError
 from dtos.user_dto import PrivateUserDTO
 from models.user import User
 from bson import ObjectId
-from ..app import logger
+from .. import logger
 import os
 
 user_bp = Blueprint("user_bp", __name__, url_prefix="/api")

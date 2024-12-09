@@ -1,9 +1,9 @@
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask import Blueprint, request, jsonify
-from models.thread import Thread
+from ..models.thread import Thread
 from bson import ObjectId
-from models.user import User
-from ..app import logger
+from ..models.user import User
+from .. import logger
 
 thread_bp = Blueprint("thread_bp", __name__)
 

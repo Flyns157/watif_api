@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from bson import ObjectId
-from utils.database import get_database
+from ..utils.database import get_database
 from typing import Generator
 
 db = get_database()
@@ -31,14 +31,14 @@ class Role:
         self.save()
 
     @staticmethod
-    def get_by_id(role_id: str | ObjectId) -> 'Role' | None:
+    def get_by_id(role_id: str | ObjectId) -> 'Role | None':
         data = db.roles.find_one({"_id": role_id})
         if data:
             return Role(**data)
         return None
 
     @staticmethod
-    def get_by_name(role_name: str) -> 'Role' | None:
+    def get_by_name(role_name: str) -> 'Role | None':
         data = db.roles.find_one({"name": role_name})
         if data:
             return Role(**data)

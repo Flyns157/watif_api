@@ -4,9 +4,9 @@ from bson import ObjectId
 from pydantic import EmailStr, ValidationError
 from datetime import date
 from pathlib import Path
-from models.interest import Interest
-from models.role import Role
-from utils.database import get_database
+from .interest import Interest
+from .role import Role
+from ..utils.database import get_database
 import bcrypt
 from dtos.user_dto import PublicUserDTO, PrivateUserDTO
 from ..utils.config import Config
@@ -174,7 +174,7 @@ class User:
         return Image(Config.MEDIA_PATH / self.pp)
 
     @staticmethod
-    def get_by_id(user_id: str | ObjectId, strtype: bool = True):
+    def get_by_id(user_id: str | ObjectId, strtype: bool = True) -> 'User| None':
         """Retrieve a user by their unique identifier.
         
         Args:
@@ -202,7 +202,7 @@ class User:
         return None
 
     @staticmethod
-    def get_by_email(user_email: str | EmailStr) -> 'User':
+    def get_by_email(user_email: str | EmailStr) -> 'User| None':
         """Retrieve a user by their email address.
         
         Args:

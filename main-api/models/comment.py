@@ -2,10 +2,10 @@ from dataclasses import dataclass, field
 from bson import ObjectId
 from datetime import datetime
 from pathlib import Path
-from utils.database import get_database
+from ..utils.database import get_database
 from typing import Generator
-from models.user import User
-from models.key import Key
+from .user import User
+from .key import Key
 from PIL.Image import Image
 from ..utils.config import Config
 

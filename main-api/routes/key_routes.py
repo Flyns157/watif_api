@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models.key import keys
+from ..models.key import Key
 from bson import ObjectId
 
 key_bp = Blueprint("key_bp", __name__)

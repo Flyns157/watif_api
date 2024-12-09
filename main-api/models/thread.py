@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from bson import ObjectId
-from models.post import Post
-from models.user import User
+from .post import Post
+from .user import User
 from typing import Generator
-from utils.database import get_database
+from ..utils.database import get_database
 
 db = get_database()
 
@@ -82,7 +82,7 @@ class Thread:
         self.save()
 
     @staticmethod
-    def get_by_id(thread_id: str | ObjectId) -> 'Thread' | None:
+    def get_by_id(thread_id: str | ObjectId) -> 'Thread | None':
         data = db.threads.find_one({"_id": thread_id})
         if data:
             return Thread(**data)

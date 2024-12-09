@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from bson import ObjectId
-from utils.database import get_database
+from ..utils.database import get_database
 from typing import Generator
 
 db = get_database()
@@ -22,14 +22,14 @@ class Interest:
             db.interests.delete_one({"_id": self._id})
 
     @staticmethod
-    def get_by_id(interest_id: str | ObjectId) -> 'Interest' | None:
+    def get_by_id(interest_id: str | ObjectId) -> 'Interest | None':
         data = db.interests.find_one({"_id": interest_id})
         if data:
             return Interest(**data)
         return None
 
     @staticmethod
-    def get_by_name(interest_name: str) -> 'Interest' | None:
+    def get_by_name(interest_name: str) -> 'Interest | None':
         data = db.interests.find_one({"name": interest_name})
         if data:
             return Interest(**data)

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models.comment import Comment
+from ..models.comment import Comment
 from bson import ObjectId
 
 comment_bp = Blueprint("comment_bp", __name__)

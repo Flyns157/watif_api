@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models.post import Post
+from ..models.post import Post
 from bson import ObjectId
 
 post_bp = Blueprint("post_bp", __name__)

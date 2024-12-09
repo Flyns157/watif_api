@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models.interest import Interest
+from ..models.interest import Interest
 from bson import ObjectId
 
 interest_bp = Blueprint("interest_bp", __name__)
