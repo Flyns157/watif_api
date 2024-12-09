@@ -3,8 +3,8 @@ from typing import Any
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager, create_access_token
 from datetime import timedelta
-from models.user import User
-from config import Config
+from .models.user import User
+from .utils.config import Config
 import logging
 import os
 
@@ -56,7 +56,3 @@ class WatifAPI(Flask):
     def run(self, host: str | None = None, port: int | None = None, debug: bool | None = None, load_dotenv: bool = True, **options: Any) -> None:
         self.jwt.init_app(self)
         return super().run(host, port, debug, load_dotenv, **options)
-
-
-if __name__ == "__main__":
-    WatifAPI().run(debug=True)

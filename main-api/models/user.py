@@ -9,7 +9,7 @@ from models.role import Role
 from utils.database import get_database
 import bcrypt
 from dtos.user_dto import PublicUserDTO, PrivateUserDTO
-from ..app import Config
+from ..utils.config import Config
 from PIL.Image import Image
 from typing import Generator
 from utils.helpers import allowed_file, isobjectid
@@ -77,6 +77,7 @@ class User:
         """Encrypt the user's password after initialization if it's not already hashed."""
         if not self.password.startswith('$2b$'):
             self.password = self.hash_password(self.password)
+        self.validate_email()
 
     @staticmethod
     def hash_password(password: str | bytes) -> str:
@@ -129,6 +130,7 @@ class User:
                     self.role = Role.get_by_name(v)._id
                 else:
                     setattr(self, k, v)
+        self.validate_email()
         self.save()
 
     def get_role(self) -> Role:
