@@ -1,0 +1,18 @@
+{
+    "admin": {
+        "uuid": "8739e974-9089-5da8-9f0e-2671ae3b830e",
+        "username": "admin",
+        "full_name": "Admin User",
+        "email": "admin@gmail.com",
+        "hashed_password": "$2b$12$HxWHkvMuL7WrZad6lcCfluNFj1/Zp63lvP5aUrKlSTYtoFzPXHOtu",
+        "disabled": false
+    },
+    "tim": {
+        "uuid": "ed14d71b-2791-5862-8cc1-8b80eb14fe82",
+        "username": "tim",
+        "full_name": "Tim Ruscica",
+        "email": "tim@gmail.com",
+        "hashed_password": "$2b$12$HxWHkvMuL7WrZad6lcCfluNFj1/Zp63lvP5aUrKlSTYtoFzPXHOtu",
+        "disabled": false
+    }
+}
