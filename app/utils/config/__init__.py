@@ -1,15 +1,22 @@
 from pydantic import BaseModel
+from dotenv import load_dotenv
+import os
+
 from .modes import Mode, Stage
 
 
-class Settings(BaseModel):
-    debug: bool = False
-    testing: bool = False
-    database_url: str = "sqlite://test.db"
+load_dotenv()
+
+
+class Settings:
+    MONGODB_URI: str = os.getenv("MONGODB_URI")
+    MONGODB_DATABASE: str = os.getenv("MONGODB_DATABASE")
     
-    jwt_secret_key: str = "83daa0256a2289b0fb23693bf1f6034d44396675749244721a2b20e896e11662"
-    jwt_algorithm: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY")
+    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
     
-    mode: Mode = Mode.MAIN
-    stage: Stage = Stage.DEVELOPMENT
+    MODE: Mode = Mode(os.getenv("MODE"))
+    STAGE: Stage = Stage(os.getenv("STAGE"))
+
+    DOMAIN_NAME = os.getenv("DOMAIN_NAME")

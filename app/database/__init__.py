@@ -1,7 +1,7 @@
 import json
 import os
 
-from ..model import User
+from ..models import User
 
 
 # ====== User data ===== #

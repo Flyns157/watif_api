@@ -5,15 +5,13 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 
 
-from .model import UserInDB, TokenData
+from .models import UserInDB, TokenData
 from .utils.config import Settings
 from .database import get_users
 
 
-settings = Settings()
-
-SECRET_KEY = Settings().jwt_secret_key
-ALGORITHM = Settings().jwt_algorithm
+SECRET_KEY = Settings.JWT_SECRET_KEY
+ALGORITHM = Settings.JWT_ALGORITHM
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
