@@ -39,7 +39,9 @@ async def create_user(user: CreateUserModel = Body(...)):
     if "role_name" in user_dict:
         if not (role := await role_collection.find_one({"name": user_dict["role_name"]})):
             raise HTTPException(status_code=400, detail=f"Role '{user_dict['role_name']}' not found")
-        if user_dict["role_name"] != "user":
+        # TODO: Check if the user has permission to create a user with the given role
+        if user_dict["role_name"] != "user" and not corresponds(None, have_permission="create:admin"):
+            raise HTTPException(status_code=403, detail="Not authorized to create an admin user")
     else:
         user_dict["role_name"] = "user"
 
@@ -67,6 +69,7 @@ async def list_users():
 
     The response is unpaginated and limited to 1000 results.
     """
+    # TODO: Add pagination and filtering
     return UserCollection(users=await user_collection.find().to_list(1000))
 
 
