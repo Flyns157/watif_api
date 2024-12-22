@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request
 import logging
 import time
 
+from .utils.config import Settings, Mode
 
 __version__ = "0.1.0"
 
@@ -12,7 +13,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     handlers=[
                         logging.FileHandler("app.log"),  # Log to a file
-                        logging.StreamHandler()          # Also log to console
+                        # logging.StreamHandler()          # Also log to console
                     ])
 main_logger = logging.getLogger(__name__)
 
@@ -40,5 +41,9 @@ from .routers import auth_router, users_router
 app.include_router(auth_router)
 app.include_router(users_router)
 
-# Mount the static files directory
+if Settings.MODE == Mode.MAIN:
+    ...  # Add additional routes for the main app here
+
+
+# === Mount static files directory === #
 app.mount("/storage", StaticFiles(directory="storage"), name="storage")
