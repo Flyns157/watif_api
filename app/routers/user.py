@@ -1,19 +1,20 @@
-from fastapi import Body, HTTPException, status, APIRouter
+from fastapi import Body, HTTPException, status, APIRouter, Depends
 from pymongo import ReturnDocument
 from datetime import datetime
 from pydantic import UUID5
 from pathlib import Path
-import uuid
 
 from ..models.user import (
     CreateUserModel,
     GetUserModel,
     UpdateUserModel,
     UserCollection,
+    UserModel,
 )
-from ..database.mongodb import user_collection
-from ..auth import get_password_hash
-from ..utils.config import Settings
+from ..auth import get_password_hash, get_current_active_user, corresponds
+from ..database.mongodb import user_collection, role_collection
+from ..utils import generate_uuid
+
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -29,11 +30,18 @@ async def create_user(user: CreateUserModel = Body(...)):
     Insert a new user record with a hashed password.
     """
     if user.uuid is None:
-        user.uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, Settings.DOMAIN_NAME))
+        user.uuid = str(generate_uuid())
 
     user_dict = user.model_dump()
     user_dict["hashed_password"] = get_password_hash(user_dict.pop("password"))
     user_dict["birth_date"] = user_dict["birth_date"].strftime("%Y-%m-%d")
+
+    if "role_name" in user_dict:
+        if not (role := await role_collection.find_one({"name": user_dict["role_name"]})):
+            raise HTTPException(status_code=400, detail=f"Role '{user_dict['role_name']}' not found")
+        if user_dict["role_name"] != "user":
+    else:
+        user_dict["role_name"] = "user"
 
     try:
         new_user = await user_collection.insert_one(user_dict)
@@ -84,13 +92,16 @@ async def show_user(uuid: UUID5):
     response_description="Update a user",
     response_model=GetUserModel,
 )
-async def update_user(uuid: UUID5, user: UpdateUserModel = Body(...)):
+async def update_user(uuid: UUID5, user: UpdateUserModel = Body(...), current_user: UserModel = Depends(get_current_active_user)):
     """
-    Update individual fields of an existing student record.
+    Update individual fields of an existing user record.
 
     Only the provided fields will be updated.
     Any missing or `null` fields will be ignored.
     """
+    if not corresponds(current_user, be_user=uuid, have_permission="update:self") or not corresponds(current_user, have_permission="update:all"):
+        raise HTTPException(status_code=403, detail="Not authorized to perform this action")
+
     user = {
         k: v for k, v in user.model_dump().items() if v is not None
     }
@@ -130,15 +141,21 @@ async def update_user(uuid: UUID5, user: UpdateUserModel = Body(...)):
     response_description="Delete a user",
     response_model=GetUserModel,
 )
-async def delete_student(uuid: UUID5):
+async def delete_user(uuid: UUID5, current_user: UserModel = Depends(get_current_active_user)):
     """
-    Remove a single student record from the database.
+    Remove a single user record from the database.
     """
+    if not corresponds(current_user, be_user=uuid, have_permission="delete:self") or not corresponds(current_user, have_permission="delete:all"):
+        raise HTTPException(status_code=403, detail="Not authorized to perform this action")
+
     if (
-        deleted_student := await user_collection.find_one({"uuid": str(uuid)})
+        deleted_user := await user_collection.find_one({"uuid": str(uuid)})
     ) is not None:
         delete_result = await user_collection.delete_one({"uuid": str(uuid)})
         if delete_result.deleted_count == 1:
-            return deleted_student
+            return deleted_user
 
     raise HTTPException(status_code=404, detail=f"User {uuid} not found")
+
+
+# TODO: Add a stat endpoint to get user stats

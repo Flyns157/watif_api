@@ -12,7 +12,7 @@ class UserModel(BaseModel):
     """
 
     uuid: str | UUID5
-    id_role: str | UUID5 | None = None
+    role_name: str
     username: str
     hashed_password: str | bytes
     email: EmailStr
@@ -58,7 +58,7 @@ class GetUserModel(BaseModel):
     """
 
     uuid: str | UUID5
-    id_role: str | UUID5 = None
+    role_name: str
     username: str
     email: EmailStr
     name: str
@@ -140,6 +140,7 @@ class UpdateUserModel(BaseModel):
     Container for a single user record used to update an existing user.
     """
 
+    role_name: str | None = None
     username: str | None = None
     password: str | bytes | None = None
     email: EmailStr | None = None

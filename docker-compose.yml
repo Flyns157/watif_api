@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: none
+    volumes:
+      - neo4j-data:/data
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo-data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    ports:
+      - 27017:27017
+
+volumes:
+  mongo-data:
+    driver: local
+
+
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.prod
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - neo4j
+  #     - mongodb
+
+volumes:
+  mongo-data:
+  neo4j-data:

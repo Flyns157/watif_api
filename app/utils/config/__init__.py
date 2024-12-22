@@ -19,4 +19,4 @@ class Settings:
     MODE: Mode = Mode(os.getenv("MODE"))
     STAGE: Stage = Stage(os.getenv("STAGE"))
 
-    DOMAIN_NAME = os.getenv("DOMAIN_NAME")
+    DOMAIN_NAME: str = os.getenv("DOMAIN_NAME")

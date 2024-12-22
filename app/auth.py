@@ -2,12 +2,13 @@ from datetime import datetime, timedelta, timezone
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
+from pydantic import EmailStr, UUID5
 from jose import JWTError, jwt
 
 
-from .models import UserInDB, TokenData
+from .database.mongodb import user_collection, role_collection
+from .models import UserModel, TokenData
 from .utils.config import Settings
-from .database import get_users
 
 
 SECRET_KEY = Settings.JWT_SECRET_KEY
@@ -24,20 +25,21 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def get_user(db, username: str):
-    if username in db:
-        user_data = db[username]
-        return UserInDB(**user_data)
+
+async def get_user(identifier: str | EmailStr) -> UserModel | None:
+    try:
+        EmailStr._validate(identifier)
+        user = await user_collection.find_one({"email": identifier})
+    except ValueError:
+        user = await user_collection.find_one({"username": identifier})
+
+    if user:
+        return UserModel(**user)
 
 
-def authenticate_user(db, username: str, password: str):
-    user = get_user(db, username)
-    if not user:
-        return False
-    if not verify_password(password, user.hashed_password):
-        return False
-
-    return user
+async def authenticate_user(identifier: str | EmailStr, password: str) -> UserModel | None:
+    if (user := await get_user(identifier)) and verify_password(password, user.hashed_password):
+        return user
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
@@ -65,15 +67,60 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise credential_exception
 
-    user = get_user(get_users(), username=token_data.username)
+    user = await get_user(token_data.username)
     if user is None:
         raise credential_exception
 
     return user
 
 
-async def get_current_active_user(current_user: UserInDB = Depends(get_current_user)):
+async def get_current_active_user(current_user: UserModel = Depends(get_current_user)):
     if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
+        raise HTTPException(status_code=400, detail="Disabled user")
 
     return current_user
+
+
+async def get_permissions(user: UserModel):
+    roles: list = await role_collection.find().to_list()
+
+    def index_role(roles: list) -> dict:
+        return {role["name"]: role for role in roles}
+
+    roles = index_role(roles)
+
+    def get_rights(role_name: str):
+        return [] if not (role := roles.get(role_name)) else role["rights"] + [p for r in role["inherits"] for p in get_rights(r)]
+
+    return get_rights(user.role_name)
+
+
+async def has_permissions(user: UserModel, permission: str) -> bool:
+    roles: list = await role_collection.find().to_list()
+
+    def index_role(roles: list) -> dict:
+        return {role["name"]: role for role in roles}
+
+    roles = index_role(roles)
+
+    def has_right(role_name: str, permission: str) -> bool:
+        if not (role := roles.get(role_name)):
+            return False
+        if permission in role["rights"]:
+            return True
+        return any(has_right(r, permission) for r in role["inherits"])
+
+    return has_right(user.role_name, permission)
+
+
+async def corresponds(user: UserModel, be_user: str | UUID5 = None, have_permission: str = None, have_role: str = None) -> bool:
+    if be_user and str(user.uuid) != str(be_user):
+        return False
+
+    if have_permission and not await has_permissions(user, have_permission):
+        return False
+
+    if have_role and user.role_name != have_role:
+        return False
+
+    return True

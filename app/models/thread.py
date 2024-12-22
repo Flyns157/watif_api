@@ -1,10 +1,11 @@
 from pydantic import BaseModel, Field, UUID5
+from ..utils import generate_uuid
 
 
 class Thread(BaseModel):
-    id: UUID5 = Field(default_factory=UUID5)
+    id: str | UUID5 = Field(default_factory=generate_uuid)
     name: str
     public: bool
-    id_owner: UUID5
-    moderators: list[UUID5] | None
-    members: list[UUID5] | None
+    id_owner: str | UUID5
+    moderators: list[str |UUID5] | None = None
+    members: list[str | UUID5] | None = None

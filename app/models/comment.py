@@ -7,11 +7,11 @@ class Comment(BaseModel):
     """
     Comment model for a single comment record.
     """
-    uuid: UUID5
-    id_author: UUID5
+    uuid: str | UUID5
+    id_author: str | UUID5
     date: datetime = Field(default_factory=datetime.now)
     content: str
-    medias: list[Path] | None
-    keys: list[UUID5] | None
-    likes: list[UUID5] | None
-    comments: list[UUID5] | None
+    medias: list[str | Path] | None = None
+    keys: list[str | UUID5] | None = None
+    likes: list[str |UUID5] | None = None
+    comments: list[str |UUID5] | None = None
