@@ -1,79 +1,107 @@
-from pydantic import BaseModel
-import motor.motor_asyncio
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from fastapi import HTTPException, status
+from datetime import datetime, date
 
 from ..utils.config import Settings
-from ..models.role import Role
+from ..utils import generate_uuid
+from ..models import Role, User
+from .. import main_logger
 
 
-# Set up the MongoDB connection
-client = motor.motor_asyncio.AsyncIOMotorClient(Settings.MONGODB_URI)
-client.uuid_representation = 5
-db = client[Settings.MONGODB_DATABASE]
+MONGODB_URL = Settings.MONGODB_URI
+MONGODB_USER = Settings.MONGODB_USER
+MONGODB_PASSWORD = Settings.MONGODB_PASSWORD
+MONGODB_DB_NAME = Settings.MONGODB_DATABASE
 
 
-# User collection
-user_collection = db.get_collection("users")
+class MongoManager:
+    client: AsyncIOMotorClient | None = None
+    db: AsyncIOMotorDatabase | None = None
 
-# Role collection
-role_collection = db.get_collection("roles")
+    async def connect_to_database(self):
+        try:
+            # Create connection URL with authentication
+            if MONGODB_USER and MONGODB_PASSWORD:
+                connection_url = f"mongodb://{MONGODB_USER}:{MONGODB_PASSWORD}@localhost:27017/{MONGODB_DB_NAME}?authSource=admin"
+            else:
+                connection_url = MONGODB_URL
 
-
-async def initialize_database():
-    # Create indexes
-    await user_collection.create_index("uuid", unique=True)
-    await user_collection.create_index("username", unique=True)
-    await user_collection.create_index("email", unique=True)
-
-    await role_collection.create_index("name", unique=True)
-
-    # Create default roles if they don't exist
-    existing_role = await role_collection.find_one({"name": "user"})
-    if existing_role is None:
-        role_collection.insert_one(
-            Role(name="user" , rights=["update:self", "delete:self"]).model_dump()
-        )
-
-    existing_role = await role_collection.find_one({"name": "admin"})
-    if existing_role is None:
-        role_collection.insert_one(
-            Role(name="admin" , rights=["*", "create:all", "read:all", "update:all", "delete:all", ], inherits=["user"]).model_dump()
-        )
-
-# TODO: Add more methods for CRUD operations on other collections (and redefine the security model)
-def get_collection(collection_name: str | BaseModel):
-    if issubclass(collection_name, BaseModel):
-        collection_name = collection_name.__name__.lower()
-    return db.get_collection(collection_name)
-
-class MongoModel:
-    collection_name: str | BaseModel
-
-    @classmethod
-    async def find_one(cls, query: dict):
-        collection = get_collection(cls.collection_name)
-        return await collection.find_one(query)
-
-    @classmethod
-    async def find(cls, query: dict):
-        collection = get_collection(cls.collection_name)
-        return await collection.find(query)
-
-    @classmethod
-    async def insert_one(cls, document: dict):
-        collection = get_collection(cls.collection_name)
-        return await collection.insert_one(document)
-
-    @classmethod
-    async def update_one(cls, query: dict, update: dict):
-        collection = get_collection(cls.collection_name)
-        return await collection.update_one(query, update)
-
-    @classmethod
-    async def delete_one(cls, query: dict):
-        collection = get_collection(cls.collection_name)
-        return await collection.delete_one(query)
+            # Connect to MongoDB
+            self.client = AsyncIOMotorClient(connection_url)
+            
+            # Test the connection
+            await self.client.admin.command('ping')
+            
+            self.db = self.client[MONGODB_DB_NAME]
+            
+            # Initialize database structure
+            try:
+                await self.initialize_database()
+            except Exception as e:
+                main_logger.info(f"Error creating indexes: {e}")
+                # Don't raise the error as indexes might already exist
+                
+        except Exception as e:
+            main_logger.info(f"Could not connect to MongoDB: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Could not connect to database"
+            )
 
 
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(initialize_database())
+    async def initialize_database(self):
+        self.client.uuid_representation = 5
+
+        # Create indexes
+        await self.db.users.create_index("uuid", unique=True)
+        await self.db.users.create_index("username", unique=True)
+        await self.db.users.create_index("email", unique=True)
+
+        await self.db.roles.create_index("name", unique=True)
+        main_logger.info("Indexes created successfully")
+
+        # Create default roles if they don't exist
+        existing_role = await self.db.roles.find_one({"name": "admin"})
+        if existing_role is None:
+            self.db.roles.insert_one(
+                Role(name="admin" , rights=["*", "create:all", "read:all", "update:all", "delete:all", ], inherits=["user"]).model_dump()
+            )
+            main_logger.info("Default admin role created successfully")
+
+        existing_role = await self.db.roles.find_one({"name": "user"})
+        if existing_role is None:
+            self.db.roles.insert_one(
+                Role(name="user" , rights=["update:self", "delete:self"]).model_dump()
+            )
+            main_logger.info("Default user role created successfully")
+
+        # Create default a default admin if it doesn't exist
+        existing_user = await self.db.users.find_one({"username": "admin"})
+        if existing_user is None:
+            from ..auth import get_password_hash
+            self.db.users.insert_one(
+                User(
+                    uuid = generate_uuid(),
+                    role = "admin",
+                    username = "admin",
+                    hashed_password = get_password_hash(Settings.ADMIN_PASSWORD),
+                    email = Settings.ADMIN_EMAIL,
+                    name = "Admin",
+                    surname = "Admin",
+                    pp = r"images/pp/default-avatar-icon-of-social-media-user-vector.jpg",
+                    birth_date = str(date.today()),
+                    followed = [],
+                    blocked = [],
+                    interests = [],
+                    description = "",
+                    disabled = False,
+                    created_at = datetime.now(),
+                    updated_at = datetime.now()
+                ).model_dump()
+            )
+            main_logger.info("Default admin user created successfully")
+
+
+    async def close_database_connection(self):
+        if self.client is not None:
+            self.client.close()
