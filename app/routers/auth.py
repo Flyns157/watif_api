@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from ..auth import authenticate_user, create_access_token, get_current_active_user
 from ..utils.config import Settings
-from ..models import GetUserModel, Token
+from ..models import UserRead, Token
 
 
 ACCESS_TOKEN_EXPIRE_MINUTES = Settings.ACCESS_TOKEN_EXPIRE_MINUTES
@@ -24,8 +24,8 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 
 
-@router.get("/me", response_model=GetUserModel)
-async def read_users_me(current_user: GetUserModel = Depends(get_current_active_user)):
+@router.get("/me", response_model=UserRead)
+async def read_users_me(current_user: UserRead = Depends(get_current_active_user)):
     return current_user
 
 

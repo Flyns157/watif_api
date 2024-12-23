@@ -7,7 +7,7 @@ from jose import JWTError, jwt
 
 
 from .database.mongodb import user_collection, role_collection
-from .models import UserModel, TokenData
+from .models import User, TokenData
 from .utils.config import Settings
 
 
@@ -26,7 +26,7 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-async def get_user(identifier: str | EmailStr) -> UserModel | None:
+async def get_user(identifier: str | EmailStr) -> User | None:
     try:
         EmailStr._validate(identifier)
         user = await user_collection.find_one({"email": identifier})
@@ -34,10 +34,10 @@ async def get_user(identifier: str | EmailStr) -> UserModel | None:
         user = await user_collection.find_one({"username": identifier})
 
     if user:
-        return UserModel(**user)
+        return User(**user)
 
 
-async def authenticate_user(identifier: str | EmailStr, password: str) -> UserModel | None:
+async def authenticate_user(identifier: str | EmailStr, password: str) -> User | None:
     if (user := await get_user(identifier)) and verify_password(password, user.hashed_password):
         return user
 
@@ -74,14 +74,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 
-async def get_current_active_user(current_user: UserModel = Depends(get_current_user)):
+async def get_current_active_user(current_user: User = Depends(get_current_user)):
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Disabled user")
 
     return current_user
 
 
-async def get_permissions(user: UserModel):
+async def get_permissions(user: User):
     roles: list = await role_collection.find().to_list()
 
     def index_role(roles: list) -> dict:
@@ -95,7 +95,7 @@ async def get_permissions(user: UserModel):
     return get_rights(user.role_name)
 
 
-async def has_permissions(user: UserModel, permission: str) -> bool:
+async def has_permissions(user: User, permission: str) -> bool:
     roles: list = await role_collection.find().to_list()
 
     def index_role(roles: list) -> dict:
@@ -113,7 +113,7 @@ async def has_permissions(user: UserModel, permission: str) -> bool:
     return has_right(user.role_name, permission)
 
 
-async def corresponds(user: UserModel, be_user: str | UUID5 = None, have_permission: str = None, have_role: str = None) -> bool:
+async def corresponds(user: User, be_user: str | UUID5 = None, have_permission: str = None, have_role: str = None) -> bool:
     if be_user and str(user.uuid) != str(be_user):
         return False
 

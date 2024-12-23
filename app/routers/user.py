@@ -5,11 +5,11 @@ from pydantic import UUID5
 from pathlib import Path
 
 from ..models.user import (
-    CreateUserModel,
-    GetUserModel,
-    UpdateUserModel,
+    UserCreate,
+    UserRead,
+    UserUpdate,
     UserCollection,
-    UserModel,
+    User,
 )
 from ..auth import get_password_hash, get_current_active_user, corresponds
 from ..database.mongodb import user_collection, role_collection
@@ -22,10 +22,10 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.post(
     "/",
     response_description="Add new user",
-    response_model=GetUserModel,
+    response_model=UserRead,
     status_code=status.HTTP_201_CREATED
 )
-async def create_user(user: CreateUserModel = Body(...)):
+async def create_user(user: UserCreate = Body(...)):
     """
     Insert a new user record with a hashed password.
     """
@@ -76,7 +76,7 @@ async def list_users():
 @router.get(
     "/{uuid}",
     response_description="Get a single user",
-    response_model=GetUserModel,
+    response_model=UserRead,
 )
 async def show_user(uuid: UUID5):
     """
@@ -93,9 +93,9 @@ async def show_user(uuid: UUID5):
 @router.put(
     "/{uuid}",
     response_description="Update a user",
-    response_model=GetUserModel,
+    response_model=UserRead,
 )
-async def update_user(uuid: UUID5, user: UpdateUserModel = Body(...), current_user: UserModel = Depends(get_current_active_user)):
+async def update_user(uuid: UUID5, user: UserUpdate = Body(...), current_user: User = Depends(get_current_active_user)):
     """
     Update individual fields of an existing user record.
 
@@ -142,9 +142,9 @@ async def update_user(uuid: UUID5, user: UpdateUserModel = Body(...), current_us
 @router.delete(
     "/{uuid}",
     response_description="Delete a user",
-    response_model=GetUserModel,
+    response_model=UserRead,
 )
-async def delete_user(uuid: UUID5, current_user: UserModel = Depends(get_current_active_user)):
+async def delete_user(uuid: UUID5, current_user: User = Depends(get_current_active_user)):
     """
     Remove a single user record from the database.
     """

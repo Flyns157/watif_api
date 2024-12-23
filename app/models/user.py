@@ -1,12 +1,14 @@
 from pydantic import BaseModel, EmailStr, UUID5, Field, ConfigDict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from fastapi import HTTPException
 from functools import wraps
 from pathlib import Path
 
+from ..database.mongodb import user_collection
 
 
-class UserModel(BaseModel):
+
+class User(BaseModel):
     """
     Container for a single user record.
     """
@@ -52,7 +54,7 @@ class UserModel(BaseModel):
     )
 
 
-class GetUserModel(BaseModel):
+class UserRead(BaseModel):
     """
     Container for a single user record returned by the API.
     """
@@ -96,7 +98,7 @@ class GetUserModel(BaseModel):
     )
 
 
-class CreateUserModel(BaseModel):
+class UserCreate(BaseModel):
     """
     Container for a single user record used to create a new user.
     """
@@ -135,7 +137,7 @@ class CreateUserModel(BaseModel):
     )
 
 
-class UpdateUserModel(BaseModel):
+class UserUpdate(BaseModel):
     """
     Container for a single user record used to update an existing user.
     """
@@ -175,12 +177,12 @@ class UpdateUserModel(BaseModel):
 
 class UserCollection(BaseModel):
     """
-    A container holding a list of `GetUserModel` instances.
+    A container holding a list of `UserRead` instances.
 
     This exists because providing a top-level array in a JSON response can be a [vulnerability](https://haacked.com/archive/2009/06/25/json-hijacking.aspx/)
     """
 
-    users: list[GetUserModel]
+    users: list[UserRead]
 
 
 # === Verification functions === #
@@ -188,7 +190,7 @@ def validate_user_input(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
         user = kwargs.get('user') or args[-1]
-        if isinstance(user, (CreateUserModel, UpdateUserModel)):
+        if isinstance(user, (UserCreate, UserUpdate)):
             # Check password strength
             if len(user.password) < 8:
                 raise HTTPException(
