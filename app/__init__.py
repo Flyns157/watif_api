@@ -1,3 +1,5 @@
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, Request
 import logging
@@ -8,21 +10,38 @@ from .utils.config import Settings, Mode
 __version__ = "0.1.0"
 
 
-# === Set up logging === #
+# === Set up logging and database === #
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     handlers=[
                         logging.FileHandler("app.log"),  # Log to a file
-                        # logging.StreamHandler()          # Also log to console
+                        logging.StreamHandler()          # Also log to console
                     ])
 main_logger = logging.getLogger(__name__)
 
 
+from .database.mongodb import MongoManager
+
+mongodb = MongoManager()
+
+async def get_database() -> AsyncIOMotorDatabase:
+    return mongodb.db
+
+
 # === Main application setup === #
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await mongodb.connect_to_database()
+    yield
+    await mongodb.close_database_connection()
+
+
 app = FastAPI(
     title="Student Course API",
     summary="A sample application showing how to use FastAPI to add a ReST API to a MongoDB collection.",
+    lifespan=lifespan,
 )
+
 
 # === Middleware === #
 @app.middleware("http")
