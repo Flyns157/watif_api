@@ -25,11 +25,6 @@ services:
     ports:
       - 27017:27017
 
-volumes:
-  mongo-data:
-    driver: local
-
-
   # api:
   #   build:
   #     context: .
@@ -42,4 +37,5 @@ volumes:
 
 volumes:
   mongo-data:
+      driver: local
   neo4j-data:
