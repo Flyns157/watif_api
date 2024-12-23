@@ -1,11 +1,11 @@
 from pydantic import BaseModel
-from .user import GetUserModel
+from .user import UserRead
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user_info: GetUserModel
+    user_info: UserRead
 
 
 class TokenData(BaseModel):
