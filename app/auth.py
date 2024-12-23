@@ -6,9 +6,9 @@ from pydantic import EmailStr, UUID5
 from jose import JWTError, jwt
 
 
-from .database.mongodb import user_collection, role_collection
-from .models import User, TokenData
 from .utils.config import Settings
+from .models import User
+from . import mongodb
 
 
 SECRET_KEY = Settings.JWT_SECRET_KEY
@@ -26,22 +26,6 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-async def get_user(identifier: str | EmailStr) -> User | None:
-    try:
-        EmailStr._validate(identifier)
-        user = await user_collection.find_one({"email": identifier})
-    except ValueError:
-        user = await user_collection.find_one({"username": identifier})
-
-    if user:
-        return User(**user)
-
-
-async def authenticate_user(identifier: str | EmailStr, password: str) -> User | None:
-    if (user := await get_user(identifier)) and verify_password(password, user.hashed_password):
-        return user
-
-
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     if expires_delta:
@@ -54,73 +38,116 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credential_exception = HTTPException(   status_code=status.HTTP_401_UNAUTHORIZED,
-                                            detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credential_exception
+async def authenticate_user(identifier: str | EmailStr | UUID5, password: str) -> User | None:
+    for field in ("uuid", "username", "email"):
+        if (user := await mongodb.db.users.find_one({field: identifier})):
+            return User(**user) if verify_password(password, user["hashed_password"]) else None
 
-        token_data = TokenData(username=username)
+
+async def current_user(token: str = Depends(oauth2_scheme)) -> User | None:
+    credential_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        uuid: str = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])["sub"]
+        if uuid is None:
+            raise credential_exception
     except JWTError:
         raise credential_exception
 
-    user = await get_user(token_data.username)
-    if user is None:
-        raise credential_exception
+    if (user := await mongodb.db.users.find_one({"uuid": uuid})):
+        if user.get("disabled"):
+            raise HTTPException(status_code=400, detail="Disabled user")
 
-    return user
+        return User(**user)
 
-
-async def get_current_active_user(current_user: User = Depends(get_current_user)):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Disabled user")
-
-    return current_user
+    raise credential_exception
 
 
-async def get_permissions(user: User):
-    roles: list = await role_collection.find().to_list()
+async def corresponds(user: User, **kwargs) -> bool | HTTPException:
+    if not isinstance(user, User):
+        raise TypeError("user must be an instance of User")
+
+    not_allowed_error = HTTPException(status_code=403, detail="Not enough permissions") # variant : HTTPException(status_code=403, detail="Not authorized to perform this action")
+    
+    for k, v in kwargs.items():
+        if k == "permissions":
+            for p in v:
+                if not await has_permissions(user, p):
+                    raise not_allowed_error
+
+        elif k == "permission":
+            from . import main_logger
+            main_logger.warning(f"requesting permission {v}")
+            if not await has_permissions(user, v):
+                main_logger.warning(f"user {user.username} does not have permission {v}")
+                raise not_allowed_error
+        
+        elif getattr(user, k)!= v:
+            raise not_allowed_error
+
+    return True
+
+
+def current_user_like(**kwargs) -> User | None:
+    
+    async def process_like(user: User = Depends(current_user)) -> User | None:
+        if await corresponds(user, **kwargs):
+            return user
+
+    return process_like
+
+
+def current_user_likes(*args) -> User | None:
+
+    async def process_likes(user: User = Depends(current_user)) -> User | None:
+        for conditions in args:
+            try:
+                if await corresponds(user, **conditions):
+                    return user
+            except HTTPException:
+                continue
+
+        raise HTTPException(status_code=403, detail="Not authorized to perform this action")
+
+    return process_likes
+
+
+async def get_permissions(user: User) -> set:
+    if not isinstance(user, User):
+        raise TypeError("user must be an instance of User")
+
+    roles: list = await mongodb.db.roles.find().to_list(100)
 
     def index_role(roles: list) -> dict:
         return {role["name"]: role for role in roles}
 
     roles = index_role(roles)
 
-    def get_rights(role_name: str):
-        return [] if not (role := roles.get(role_name)) else role["rights"] + [p for r in role["inherits"] for p in get_rights(r)]
+    def get_rights(role: str):
+        return [] if not (role := roles.get(role)) else role["rights"] + [p for r in role["inherits"] for p in get_rights(r)]
 
-    return get_rights(user.role_name)
+    return set(get_rights(user.role))
 
 
 async def has_permissions(user: User, permission: str) -> bool:
-    roles: list = await role_collection.find().to_list()
+    if not isinstance(user, User):
+        raise TypeError("user must be an instance of User")
+
+    roles: list = await mongodb.db.roles.find().to_list(100)
 
     def index_role(roles: list) -> dict:
         return {role["name"]: role for role in roles}
 
     roles = index_role(roles)
 
-    def has_right(role_name: str, permission: str) -> bool:
-        if not (role := roles.get(role_name)):
+    def has_right(role: str, permission: str) -> bool:
+        if not (role := roles.get(role)):
             return False
         if permission in role["rights"]:
             return True
-        return any(has_right(r, permission) for r in role["inherits"])
+        return any(has_right(r, permission) for r in role["inherits"]) if role["inherits"] else False
 
-    return has_right(user.role_name, permission)
-
-
-async def corresponds(user: User, be_user: str | UUID5 = None, have_permission: str = None, have_role: str = None) -> bool:
-    if be_user and str(user.uuid) != str(be_user):
-        return False
-
-    if have_permission and not await has_permissions(user, have_permission):
-        return False
-
-    if have_role and user.role_name != have_role:
-        return False
-
-    return True
+    return has_right(user.role, permission)

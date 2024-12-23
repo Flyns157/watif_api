@@ -1,12 +1,13 @@
 from pydantic import BaseModel
 from .user import UserRead
+from . import PyUUID
 
 
 class Token(BaseModel):
     access_token: str
     token_type: str
-    user_info: UserRead
+    user: UserRead
 
 
 class TokenData(BaseModel):
-    username: str | None = None
+    uuid: PyUUID = None
