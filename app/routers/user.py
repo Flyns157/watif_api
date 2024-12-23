@@ -101,8 +101,8 @@ async def update_user(
     uuid: UUID5,
     user: UserUpdate = Body(...),
     current_user: User = Depends(
-        current_user_likes(
-            {"uuid": Depends(), "permission": "update:self"},
+        lambda uuid: current_user_likes(
+            {"uuid": uuid, "permission": "update:self"},
             {"permission": "update:all"},
         )
     )):
@@ -119,8 +119,6 @@ async def update_user(
 
     if len(user) >= 1:
         user["updated_at"] = datetime.now()
-        if "birth_date" in user:
-            user["birth_date"] = user["birth_date"].strftime("%Y-%m-%d")
 
         if "pp" in user and isinstance(user["pp"], Path):
             user["pp"] = str(user["pp"])

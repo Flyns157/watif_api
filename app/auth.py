@@ -71,7 +71,7 @@ async def corresponds(user: User, **kwargs) -> bool | HTTPException:
         raise TypeError("user must be an instance of User")
 
     not_allowed_error = HTTPException(status_code=403, detail="Not enough permissions") # variant : HTTPException(status_code=403, detail="Not authorized to perform this action")
-    
+
     for k, v in kwargs.items():
         if k == "permissions":
             for p in v:
@@ -79,10 +79,7 @@ async def corresponds(user: User, **kwargs) -> bool | HTTPException:
                     raise not_allowed_error
 
         elif k == "permission":
-            from . import main_logger
-            main_logger.warning(f"requesting permission {v}")
             if not await has_permissions(user, v):
-                main_logger.warning(f"user {user.username} does not have permission {v}")
                 raise not_allowed_error
         
         elif getattr(user, k)!= v:
@@ -103,6 +100,10 @@ def current_user_like(**kwargs) -> User | None:
 def current_user_likes(*args) -> User | None:
 
     async def process_likes(user: User = Depends(current_user)) -> User | None:
+
+        from . import main_logger
+        main_logger.warning(str(args))
+
         for conditions in args:
             try:
                 if await corresponds(user, **conditions):
