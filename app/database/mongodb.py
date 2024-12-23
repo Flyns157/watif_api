@@ -89,7 +89,7 @@ class MongoManager:
                     name = "Admin",
                     surname = "Admin",
                     pp = r"images/pp/default-avatar-icon-of-social-media-user-vector.jpg",
-                    birth_date = str(date.today()),
+                    birth_date = date.today(),
                     followed = [],
                     blocked = [],
                     interests = [],

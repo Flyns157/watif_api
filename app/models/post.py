@@ -1,22 +1,24 @@
-from pydantic import BaseModel, Field, UUID5
+from pydantic import BaseModel, Field
 from datetime import datetime
 from pathlib import Path
 
+
 from ..utils import generate_uuid
+from . import PyUUID
 
 
 class Like(BaseModel):
     """
     Model for a single like to a comment or a post record.
     """
-    id_user: str | UUID5
+    id_user: PyUUID
 
 
 class Dislike(Like):
     """
     Model for a single dislike to a comment or a post record.
     """
-    id_user: str | UUID5
+    id_user: PyUUID
 
 
 class CommentHistory(BaseModel):
@@ -28,21 +30,21 @@ class CommentHistory(BaseModel):
     medias: list[str | Path] | None = None
     keys: list[str] | None = None
     nb_likes: int
-    updated_by: str | UUID5
+    updated_by: PyUUID
 
 
 class Comment(BaseModel):
     """
     Comment model for a single comment record.
     """
-    uuid: str | UUID5 = Field(default_factory=generate_uuid)
-    id_author: str | UUID5
+    uuid: PyUUID = Field(default_factory=generate_uuid)
+    id_author: PyUUID
     date: datetime = Field(default_factory=datetime.now)
     content: str
     medias: list[str | Path] | None = None
     keys: list[str] | None = None
-    likes: list[str | UUID5] | None = None
-    comments: list[str | UUID5] | None = None
+    likes: list[PyUUID] | None = None
+    comments: list[PyUUID] | None = None
     history: list[CommentHistory] | None = None # or Field(default_factory=list)
 
 
@@ -57,15 +59,15 @@ class CommentCreate(Comment):
     """
     Comment model for a single creation of a comment record.
     """
-    target: str | UUID5
-    uuid: str | UUID5 = Field(default_factory=generate_uuid)
-    id_author: str | UUID5
+    target: PyUUID
+    uuid: PyUUID = Field(default_factory=generate_uuid)
+    id_author: PyUUID
     date: datetime = Field(default_factory=datetime.now)
     content: str
     medias: list[str | Path] | None = None
     keys: list[str] | None = None
-    likes: list[str | UUID5] | None = None
-    comments: list[str | UUID5] | None = None
+    likes: list[PyUUID] | None = None
+    comments: list[PyUUID] | None = None
 
 
 class CommentUpdate(BaseModel):
@@ -110,15 +112,15 @@ class PostCreate(BaseModel):
     """
     Post model for a single creation of a post record.
     """
-    uuid: str | UUID5 = Field(default_factory=generate_uuid)
-    id_author: str | UUID5
+    uuid: PyUUID = Field(default_factory=generate_uuid)
+    id_author: PyUUID
     date: datetime = Field(default_factory=datetime.now)
     title: str
     content: str
     medias: list[str | Path] | None = None
     keys: list[str] | None = None
-    likes: list[str | UUID5] | None = None
-    comments: list[str | UUID5] | None = None
+    likes: list[PyUUID] | None = None
+    comments: list[PyUUID] | None = None
 
 
 class PostUpdate(CommentUpdate):

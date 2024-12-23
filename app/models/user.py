@@ -1,11 +1,8 @@
-from pydantic import BaseModel, EmailStr, UUID5, Field, ConfigDict
-from datetime import date, datetime, timedelta
-from fastapi import HTTPException
-from functools import wraps
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from datetime import date, datetime
 from pathlib import Path
 
-from ..database.mongodb import user_collection
-
+from . import PyUUID, Date
 
 
 class User(BaseModel):
@@ -13,18 +10,18 @@ class User(BaseModel):
     Container for a single user record.
     """
 
-    uuid: str | UUID5
-    role_name: str
+    uuid: PyUUID
+    role: str
     username: str
     hashed_password: str | bytes
     email: EmailStr
     name: str
     surname: str
     pp: str | Path = r"images/pp/default-avatar-icon-of-social-media-user-vector.jpg"
-    birth_date: date
-    followed: list[str | UUID5] | None
-    blocked: list[str | UUID5] | None
-    interests: list[str | UUID5] | None
+    birth_date: Date
+    followed: list[PyUUID] | None
+    blocked: list[PyUUID] | None
+    interests: list[PyUUID] | None
     description: str = ""
     disabled: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
@@ -59,17 +56,17 @@ class UserRead(BaseModel):
     Container for a single user record returned by the API.
     """
 
-    uuid: str | UUID5
-    role_name: str
+    uuid: PyUUID
+    role: str
     username: str
     email: EmailStr
     name: str
     surname: str
     pp: str | Path = r"images/pp/default-avatar-icon-of-social-media-user-vector.jpg"
-    birth_date: date
-    followed: list[str | UUID5] | None
-    blocked: list[str | UUID5] | None
-    interests: list[str | UUID5] | None
+    birth_date: Date
+    followed: list[PyUUID] | None
+    blocked: list[PyUUID] | None
+    interests: list[PyUUID] | None
     description: str = ""
     disabled: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
@@ -103,17 +100,17 @@ class UserCreate(BaseModel):
     Container for a single user record used to create a new user.
     """
 
-    uuid: str | UUID5 = None
+    uuid: PyUUID = None
     username: str
     password: str | bytes
     email: EmailStr
     name: str
     surname: str
     pp: str | Path = r"images/pp/default-avatar-icon-of-social-media-user-vector.jpg"
-    birth_date: date
-    followed: list[str | UUID5] | None = None
-    blocked: list[str | UUID5] | None = None
-    interests: list[str | UUID5] | None = None
+    birth_date: Date
+    followed: list[PyUUID] | None = None
+    blocked: list[PyUUID] | None = None
+    interests: list[PyUUID] | None = None
     description: str = ""
 
     model_config = ConfigDict(
@@ -142,17 +139,17 @@ class UserUpdate(BaseModel):
     Container for a single user record used to update an existing user.
     """
 
-    role_name: str | None = None
+    role: str | None = None
     username: str | None = None
     password: str | bytes | None = None
     email: EmailStr | None = None
     name: str | None = None
     surname: str | None = None
     pp: Path | None = None
-    birth_date: date | None = None
-    followed: list[str | UUID5] | None = None
-    blocked: list[str | UUID5] | None = None
-    interests: list[str | UUID5] | None = None
+    birth_date: Date | None = None
+    followed: list[PyUUID] | None = None
+    blocked: list[PyUUID] | None = None
+    interests: list[PyUUID] | None = None
     description: str | None = None
 
     model_config = ConfigDict(
@@ -183,40 +180,3 @@ class UserCollection(BaseModel):
     """
 
     users: list[UserRead]
-
-
-# === Verification functions === #
-def validate_user_input(func):
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
-        user = kwargs.get('user') or args[-1]
-        if isinstance(user, (UserCreate, UserUpdate)):
-            # Check password strength
-            if len(user.password) < 8:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Password must be at least 8 characters long"
-                )
-            
-            # Check age (must be at least 13)
-            if user.birth_date > datetime.now().date() - timedelta(days=13*365):
-                raise HTTPException(
-                    status_code=400,
-                    detail="User must be at least 13 years old"
-                )
-            
-            # Check if username/email exists
-            existing_user = await user_collection.find_one({
-                "$or": [
-                    {"username": user.username},
-                    {"email": user.email}
-                ]
-            })
-            if existing_user:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Username or email already exists"
-                )
-        
-        return await func(*args, **kwargs)
-    return wrapper
