@@ -1,4 +1,12 @@
-from fastapi import Body, HTTPException, status, APIRouter, Depends
+from fastapi import (
+    Body, 
+    Depends, 
+    Query, 
+    HTTPException, 
+    status, 
+    APIRouter, 
+    Response
+)
 from pymongo import ReturnDocument
 from datetime import datetime
 from pydantic import UUID5
@@ -71,14 +79,40 @@ async def create_user(
     response_description="List all users",
     response_model=UserCollection,
 )
-async def list_users():
+async def list_users(
+    skip: int = Query(0, description="Number of records to skip"),
+    limit: int = Query(100, description="Maximum number of records to return"),
+    username: str = Query(None, description="Filter by username"),
+    email: str = Query(None, description="Filter by email"),
+    role: str = Query(None, description="Filter by role"),
+):
     """
-    List all of the users data in the database.
+    List all of the users data in the database with pagination and filtering.
+    """
+    query = {}
+    if username:
+        query["username"] = {"$regex": username, "$options": "i"}
+    if email:
+        query["email"] = {"$regex": email, "$options": "i"}
+    if role:
+        query["role"] = role
 
-    The response is unpaginated and limited to 1000 results.
-    """
-    # TODO: Add pagination and filtering
-    return UserCollection(users=await mongodb.db.users.find().to_list(1000))
+    # TODO: Add sorting and filtering by other fields (e.g. birth_date, followers, etc.)
+
+    # All fields that can be used for filtering:
+    # role: str
+    # username: str
+    # email: EmailStr
+    # name: str
+    # surname: str
+    # birth_date: Date
+    # followed: list[PyUUID] | None
+    # blocked: list[PyUUID] | None
+    # interests: list[PyUUID] | None
+    # disabled: bool = False
+
+    users = await mongodb.db.users.find(query).skip(skip).limit(limit).to_list(limit)
+    return UserCollection(users=users)
 
 
 @router.get(
@@ -177,4 +211,4 @@ async def delete_user(
     raise HTTPException(status_code=404, detail=f"User {uuid} not found")
 
 
-# TODO: Add a stat endpoint to get user stats
+# TODO: Add a stat endpoint to get the stats of an user (like his number of likes, followers, etc.)
