@@ -113,7 +113,7 @@ class PostCreate(BaseModel):
     Post model for a single creation of a post record.
     """
     uuid: PyUUID = Field(default_factory=generate_uuid)
-    id_author: PyUUID
+    id_author: PyUUID | None = None
     date: datetime = Field(default_factory=datetime.now)
     title: str
     content: str
