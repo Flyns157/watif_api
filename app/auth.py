@@ -139,11 +139,8 @@ def current_user_likes(*args):
         main_logger.warning(f"current_user_likes args : {args}")
         
         for conditions in args:
-            try:
-                if await corresponds(user=user, raise_exception=True, **conditions):
-                    return user
-            except HTTPException:
-                continue
+            if await corresponds(user=user, **conditions):
+                return user
 
         raise NOT_AUTHORIZED_ERROR
 
