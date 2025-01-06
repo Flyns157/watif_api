@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 
 from . import PyUUID, Date
