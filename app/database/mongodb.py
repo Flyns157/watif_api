@@ -2,13 +2,14 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from fastapi import HTTPException, status
 from datetime import datetime, date
 
+from ..utils.config.modes import Mode
 from ..utils.config import Settings
 from ..utils import generate_uuid
 from ..models import Role, User
 from .. import main_logger
 
 
-MONGODB_URL = Settings.MONGODB_URI
+MONGODB_URI = Settings.MONGODB_URI
 MONGODB_USER = Settings.MONGODB_USER
 MONGODB_PASSWORD = Settings.MONGODB_PASSWORD
 MONGODB_DB_NAME = Settings.MONGODB_DATABASE
@@ -22,9 +23,9 @@ class MongoManager:
         try:
             # Create connection URL with authentication
             if MONGODB_USER and MONGODB_PASSWORD:
-                connection_url = f"mongodb://{MONGODB_USER}:{MONGODB_PASSWORD}@localhost:27017/{MONGODB_DB_NAME}?authSource=admin"
+                connection_url = f"mongodb://{MONGODB_USER}:{MONGODB_PASSWORD}@{MONGODB_URI}/{MONGODB_DB_NAME}?authSource=admin"
             else:
-                connection_url = MONGODB_URL
+                connection_url = f"mongodb://{MONGODB_URI}"
 
             # Connect to MongoDB
             self.client = AsyncIOMotorClient(connection_url)
@@ -35,11 +36,12 @@ class MongoManager:
             self.db = self.client[MONGODB_DB_NAME]
             
             # Initialize database structure
-            try:
-                await self.initialize_database()
-            except Exception as e:
-                main_logger.info(f"Error creating indexes: {e}")
-                # Don't raise the error as indexes might already exist
+            if Settings.MODE == Mode.MAIN:
+                try:
+                    await self.initialize_database()
+                except Exception as e:
+                    main_logger.info(f"Error creating indexes: {e}")
+                    # Don't raise the error as indexes might already exist
                 
         except Exception as e:
             main_logger.info(f"Could not connect to MongoDB: {e}")
@@ -64,14 +66,29 @@ class MongoManager:
         existing_role = await self.db.roles.find_one({"name": "admin"})
         if existing_role is None:
             self.db.roles.insert_one(
-                Role(name="admin" , rights=["*", "create:all", "read:all", "update:all", "delete:all", ], inherits=["user"]).model_dump()
+                Role(
+                    name="admin" , 
+                    rights=[
+                         "*", 
+                         "users:create:all", 
+                         "users:read:all", 
+                         "users:update:all", 
+                         "users:delete:all", 
+                    ], inherits=["user"]
+                ).model_dump()
             )
             main_logger.info("Default admin role created successfully")
 
         existing_role = await self.db.roles.find_one({"name": "user"})
         if existing_role is None:
             self.db.roles.insert_one(
-                Role(name="user" , rights=["update:self", "delete:self"]).model_dump()
+                Role(
+                    name="user", 
+                    rights=[
+                        "users:update:self", 
+                        "users:delete:self"
+                    ]
+                ).model_dump()
             )
             main_logger.info("Default user role created successfully")
 
