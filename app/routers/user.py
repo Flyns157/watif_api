@@ -11,7 +11,13 @@ from ..models.user import (
     UserCollection,
     User,
 )
-from ..auth import get_password_hash, current_user_like, current_user_likes, corresponds
+from ..auth import (
+    get_password_hash, 
+    current_user_like, 
+    current_user, 
+    corresponds, 
+    NOT_AUTHORIZED_ERROR, 
+)
 from ..utils import generate_uuid
 from .. import mongodb
 
@@ -29,7 +35,7 @@ async def create_user(
     user: UserCreate = Body(...),
     current_user: User = Depends(
         current_user_like(
-            permission="create:all"
+            permission="users:create:all"
         )
     )):
     """
@@ -101,10 +107,7 @@ async def update_user(
     uuid: UUID5,
     user: UserUpdate = Body(...),
     current_user: User = Depends(
-        lambda uuid: current_user_likes(
-            {"uuid": uuid, "permission": "update:self"},
-            {"permission": "update:all"},
-        )
+        current_user
     )):
     """
     Update individual fields of an existing user record.
@@ -112,6 +115,8 @@ async def update_user(
     Only the provided fields will be updated.
     Any missing or `null` fields will be ignored.
     """
+    if not (corresponds(uuid = uuid, permission = "users:update:self") or corresponds(current_user, permission="users:update:all")):
+        raise NOT_AUTHORIZED_ERROR
 
     user = {
         k: v for k, v in user.model_dump().items() if v is not None
@@ -154,16 +159,13 @@ async def update_user(
 async def delete_user(
     uuid: UUID5,
     current_user: User = Depends(
-        current_user_likes(
-            {"uuid": Depends(), "permission":"delete:self"},
-            {"permission": "delete:all"},
-        )
+        current_user
     )):
     """
     Remove a single user record from the database.
     """
-    if not corresponds(current_user, be_user=uuid, have_permission="delete:self") or not corresponds(current_user, have_permission="delete:all"):
-        raise HTTPException(status_code=403, detail="Not authorized to perform this action")
+    if not (corresponds(user=current_user, uuid=uuid, permission="users:delete:self") or corresponds(user=current_user, permission="users:delete:all")):
+        raise NOT_AUTHORIZED_ERROR
 
     if (
         deleted_user := await mongodb.db.users.find_one({"uuid": str(uuid)})
