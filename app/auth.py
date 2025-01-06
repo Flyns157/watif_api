@@ -18,15 +18,27 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
+NOT_AUTHORIZED_ERROR = HTTPException(status_code=403, detail="Not authorized to perform this action")
+
+
 def verify_password(plain_password, hashed_password):
+    """
+    Verify the hashed password with the plain password.
+    """
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password):
+    """
+    Hash the password.
+    """
     return pwd_context.hash(password)
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    """
+    Create an access token.
+    """
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -39,12 +51,18 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 async def authenticate_user(identifier: str | EmailStr | UUID5, password: str) -> User | None:
+    """
+    Authenticate the user with the identifier and password.
+    """
     for field in ("uuid", "username", "email"):
         if (user := await mongodb.db.users.find_one({field: identifier})):
             return User(**user) if verify_password(password, user["hashed_password"]) else None
 
 
 async def current_user(token: str = Depends(oauth2_scheme)) -> User | None:
+    """
+    Get the current user from the token.
+    """
     credential_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -66,57 +84,77 @@ async def current_user(token: str = Depends(oauth2_scheme)) -> User | None:
     raise credential_exception
 
 
-async def corresponds(user: User, **kwargs) -> bool | HTTPException:
+async def corresponds(user: User, raise_exception: bool = False, **kwargs) -> bool | HTTPException:
+    """
+    Check if the user corresponds to the conditions.
+    """
     if not isinstance(user, User):
-        raise TypeError("user must be an instance of User")
-
-    not_allowed_error = HTTPException(status_code=403, detail="Not enough permissions") # variant : HTTPException(status_code=403, detail="Not authorized to perform this action")
+        raise TypeError(f"user must be an instance of User, not a {type(user)}")
 
     for k, v in kwargs.items():
         if k == "permissions":
             for p in v:
                 if not await has_permissions(user, p):
-                    raise not_allowed_error
+                    if raise_exception:
+                        raise NOT_AUTHORIZED_ERROR
+                    return False
 
         elif k == "permission":
             if not await has_permissions(user, v):
-                raise not_allowed_error
+                if raise_exception:
+                    raise NOT_AUTHORIZED_ERROR
+                return False
         
         elif getattr(user, k)!= v:
-            raise not_allowed_error
+            if raise_exception:
+                raise NOT_AUTHORIZED_ERROR
+            return False
 
     return True
 
 
-def current_user_like(**kwargs) -> User | None:
+def current_user_like(**kwargs):
+    """
+    Get the current user from the token and check if it corresponds to the conditions.
+    """
     
     async def process_like(user: User = Depends(current_user)) -> User | None:
-        if await corresponds(user, **kwargs):
+        if await corresponds(user=user, raise_exception=True, **kwargs):
             return user
 
     return process_like
 
 
-def current_user_likes(*args) -> User | None:
+def current_user_likes(*args):
+    """
+    Get the current user from the token and check if it corresponds to the conditions (a list of conditions shema / types of users).
+    """
+        
+    from . import main_logger
+    main_logger.warning(f"current_user_likes args : {args}")
 
     async def process_likes(user: User = Depends(current_user)) -> User | None:
-
+        
         from . import main_logger
-        main_logger.warning(str(args))
-
+        main_logger.warning(f"current_user_likes args : {args}")
+        
         for conditions in args:
             try:
-                if await corresponds(user, **conditions):
+                if await corresponds(user=user, raise_exception=True, **conditions):
                     return user
             except HTTPException:
                 continue
 
-        raise HTTPException(status_code=403, detail="Not authorized to perform this action")
+        raise NOT_AUTHORIZED_ERROR
 
     return process_likes
 
 
 async def get_permissions(user: User) -> set:
+    """
+    Get the permissions of the user.
+    """
+
     if not isinstance(user, User):
         raise TypeError("user must be an instance of User")
 
@@ -134,6 +172,10 @@ async def get_permissions(user: User) -> set:
 
 
 async def has_permissions(user: User, permission: str) -> bool:
+    """
+    Check if the user has the permission.
+    """
+
     if not isinstance(user, User):
         raise TypeError("user must be an instance of User")
 
