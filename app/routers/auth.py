@@ -34,3 +34,5 @@ async def read_users_me(current_user: UserRead = Depends(current_user)):
 # TODO: Add refresh token endpoint
 
 # TODO: Add password reset endpoint
+
+# TODO: Add registration endpoint
