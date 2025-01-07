@@ -3,8 +3,8 @@ from pymongo import ReturnDocument
 import inflect
 import inspect
 
-from ..models import PyUUID
-from ... import mongodb
+from ...models import PyUUID
+from .... import mongodb
 
 
 inflector = inflect.engine()
@@ -99,40 +99,55 @@ def list_model_classes(module):
     ]
 
 
-def generate_crud_classes(base_module):
+def generate_crud_classes(base_module, excluded_files=None):
     """
     Génère dynamiquement une classe intégrant BaseModelCRUD 
-    pour chaque classe 'Model' contenue dans un module donné.
+    pour chaque classe 'Model' contenue dans un module donné,
+    sauf si elle est définie dans un fichier exclu.
 
     Args:
         base_module: Le module contenant les classes 'Model'.
+        excluded_files: Liste de fichiers (avec chemin absolu ou relatif)
+                        contenant les classes à exclure.
 
     Returns:
         dict: Un dictionnaire des nouvelles classes CRUD générées.
               La clé est le nom de la classe, la valeur est la classe elle-même.
     """
+    if excluded_files is None:
+        excluded_files = []
+
+    # Convertit les chemins exclus en absolu pour des comparaisons cohérentes
+    excluded_files = {inspect.getfile(import_module(f)).lower() for f in excluded_files}
+    
     crud_classes = {}
 
-    # Parcourt les classes du module
     for name, cls in inspect.getmembers(base_module, inspect.isclass):
         # Vérifie si la classe se termine par 'Model' et provient du module donné
         if name.endswith("Model") and cls.__module__ == base_module.__name__:
-            # Génère une nouvelle classe CRUD
-            crud_class_name = name[:-5] # Supprime 'Model' du nom
-            crud_class = type(
-                crud_class_name,        # Nom de la classe
-                (cls, BaseModelCRUD),   # Hérite de la classe modèle et de BaseModelCRUD
-                {}                      # Pas d'attributs supplémentaires
-            )
-            crud_classes[crud_class_name] = crud_class
+            # Vérifie si la classe est définie dans un fichier exclu
+            # TODO : automatiser la détection de l'existance de la classe dans un autre fichier plutot que de le faire manuellement
+            source_file = inspect.getfile(cls).lower()
+            if source_file not in excluded_files:
+                # Génère une nouvelle classe CRUD
+                crud_class_name = name[:-5]  # Supprime 'Model' du nom
+                crud_class = type(
+                    crud_class_name,  # Nom de la classe
+                    (cls, BaseModelCRUD),  # Hérite de la classe modèle et de BaseModelCRUD
+                    {}  # Pas d'attributs supplémentaires pour le moment
+                )
+                crud_classes[crud_class_name] = crud_class
 
     return crud_classes
 
 
 # Génération des classes CRUD
 try:
-    models_module = import_module("..models", package=__package__)
-    generated_classes = generate_crud_classes(models_module)
+    from ... import models  # Remplacez par le chemin réel du module
+    generated_classes = generate_crud_classes(
+        models,
+        excluded_files=[]
+    )
 
     # Attacher les classes générées à l'espace de noms actuel
     globals().update(generated_classes)
