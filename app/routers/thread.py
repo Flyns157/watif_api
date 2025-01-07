@@ -16,7 +16,7 @@ from ..models.thread import (
     ThreadCollection, 
     Thread
 )
-from ..auth import (
+from ..security.auth import (
     current_user, 
     corresponds, 
     NOT_AUTHORIZED_ERROR
@@ -39,12 +39,12 @@ async def create_thread(
     """
     Insert a new thread record.
     """
-    thread_dict = thread.dict()
-    thread_dict["id_owner"] = current_user.uuid
+    if not thread.id_owner or corresponds(user=current_user, permission="threads:create:all"):
+        thread.id_owner = current_user.uuid
 
     try:
-        result = await mongodb.db.threads.insert_one(thread_dict)
-        created_thread = await mongodb.db.threads.find_one({"_id": result.inserted_id})
+        result = await mongodb.db.threads.insert_one(thread.model_dump())
+        created_thread = await mongodb.db.threads.find_one({"uuid": result.inserted_id})
         return created_thread
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating thread: {e}")
@@ -60,6 +60,7 @@ async def list_threads(
     limit: int = Query(100, description="Maximum number of records to return"),
     name: str = Query(None, description="Filter by thread name"),
     public: bool = Query(None, description="Filter by public status"),
+    current_user = Depends(current_user) | None,
 ):
     """
     List all threads with pagination and optional filters.
@@ -71,6 +72,8 @@ async def list_threads(
         query["public"] = public
 
     threads = await mongodb.db.threads.find(query).skip(skip).limit(limit).to_list(limit)
+    if not corresponds(user=current_user, permission="threads:read:private:all"):
+        threads = [t for t in threads if not t["private"] or t["id_owner"] == current_user.uuid]
     return ThreadCollection(threads=threads)
 
 

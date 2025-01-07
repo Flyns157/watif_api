@@ -11,14 +11,16 @@ Date = Annotated[str, BeforeValidator(lambda v: str(date.fromisoformat(v)) if no
 
 from .token import Token, TokenData
 from .user import (
-    User, 
+    User,
+    User as UserModel, 
     UserRead,
     UserUpdate, 
     UserCollection,
     UserCreate,
 )
 from .post import (
-    Post, 
+    Post,
+    Post as PostModel, 
     PostCollection, 
     PostCreate, 
     PostUpdate, 
@@ -30,19 +32,22 @@ from .post import (
     Dislike,
 )
 from .interest import (
-    Interest, 
+    Interest,
+    Interest as InterestModel, 
     InterestRead, 
     InterestCollection, 
     InterestCreate,
 )
 from .key import (
-    Key, 
+    key,
+    Key as KeyModel, 
     KeyRead, 
     KeyCollection, 
     KeyCreate,
 )
 from .role import (
     Role, 
+    Role as RoleModel, 
     RoleRead, 
     RoleCollection,
     RoleCreate, 
@@ -50,6 +55,7 @@ from .role import (
 )
 from .thread import (
     Thread, 
+    Thread as ThreadModel, 
     ThreadRead, 
     ThreadCollection, 
     ThreadCreate, 

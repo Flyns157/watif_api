@@ -1,2 +1,81 @@
 # Maquette d'une API RESTful en Python avec FastAPI
 Ce projet est un projet de maquettage d'une API RESTful en Python avec FastAPI scalable verticalement et horizontalement doublé d'une facilité d'utilisation.
+
+## Structure du projet
+
+```
+└── 📁watif
+    └── 📁.venv
+    └── 📁app
+        └── __init__.py
+        └── __main__.py
+        └── auth.py
+        └── 📁core
+            └── 📁ImgGen
+            └── 📁Recommender
+                └── __init__.py
+                └── em_engine.py
+                └── 📁embedding
+                    └── __init__.py
+                    └── mc_core.py
+                └── ja_engine.py
+                └── mc_engine.py
+                └── README.md
+        └── 📁database
+            └── __init__.py
+            └── mongodb.py
+            └── neo4j.py
+            └── synchronizer.py
+        └── 📁models
+            └── __init__.py
+            └── interest.py
+            └── key.py
+            └── models.puml
+            └── post.py
+            └── role.py
+            └── thread.py
+            └── token.py
+            └── user.py
+        └── 📁routers
+            └── __init__.py
+            └── auth.py
+            └── em_router.py
+            └── ja_router.py
+            └── mc_router.py
+            └── post.py
+            └── thread.py
+            └── user.py
+        └── 📁service
+        └── 📁utils
+            └── __init__.py
+            └── 📁config
+                └── __init__.py
+                └── modes.py
+            └── 📁exceptions
+    └── 📁configs
+        └── main.conf
+        └── recommendation.conf
+    └── 📁docker
+        └── Dockerfile.dev
+        └── Dockerfile.prod
+    └── 📁storage
+        └── 📁images
+            └── 📁pp
+                └── default-avatar-icon-of-social-media-user-vector.jpg
+    └── 📁tests
+        └── __main__.py
+    └── .dockerignore
+    └── .env
+    └── .env.example
+    └── .gitignore
+    └── app.log
+    └── docker-compose.yml
+    └── gitlab-ci.yml
+    └── init-mongo.js
+    └── LICENCE
+    └── main.py
+    └── README
+    └── requirements.in
+    └── setup.py
+    └── test.py
+```

@@ -7,10 +7,10 @@ class Thread(BaseModel):
     """
     A model for a thread.
     """
-    id: PyUUID = Field(default_factory=generate_uuid)
+    uuid: PyUUID = Field(default_factory=generate_uuid)
     name: str
     public: bool = False
-    id_owner: PyUUID
+    id_owner: PyUUID | None = None
     moderators: list[PyUUID] | None = None
     members: list[PyUUID] | None = None
     banned_users: list[PyUUID] | None = None

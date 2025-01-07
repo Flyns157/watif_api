@@ -19,7 +19,7 @@ from ..models.user import (
     UserCollection,
     User,
 )
-from ..auth import (
+from ..security.auth import (
     get_password_hash, 
     current_user_like, 
     current_user, 
@@ -149,7 +149,7 @@ async def update_user(
     Only the provided fields will be updated.
     Any missing or `null` fields will be ignored.
     """
-    if not (corresponds(uuid = uuid, permission = "users:update:self") or corresponds(current_user, permission="users:update:all")):
+    if not (corresponds(uuid = uuid, permission = "users:update:own") or corresponds(current_user, permission="users:update:all")):
         raise NOT_AUTHORIZED_ERROR
 
     user = {
@@ -198,7 +198,7 @@ async def delete_user(
     """
     Remove a single user record from the database.
     """
-    if not (corresponds(user=current_user, uuid=uuid, permission="users:delete:self") or corresponds(user=current_user, permission="users:delete:all")):
+    if not (corresponds(user=current_user, uuid=uuid, permission="users:delete:own") or corresponds(user=current_user, permission="users:delete:all")):
         raise NOT_AUTHORIZED_ERROR
 
     if (

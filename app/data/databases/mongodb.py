@@ -2,11 +2,11 @@ from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from fastapi import HTTPException, status
 from datetime import datetime, date
 
-from ..utils.config.modes import Mode
-from ..utils.config import Settings
-from ..utils import generate_uuid
-from ..models import Role, User
-from .. import main_logger
+from ...utils.config.modes import Mode
+from ...utils.config import Settings
+from ...utils import generate_uuid
+from ..models import Role, UserModel
+from ... import main_logger
 
 
 MONGODB_URI = Settings.MONGODB_URI
@@ -69,11 +69,12 @@ class MongoManager:
                 Role(
                     name="admin" , 
                     rights=[
-                         "*", 
-                         "users:create:all", 
-                         "users:read:all", 
-                         "users:update:all", 
-                         "users:delete:all", 
+                        "*", 
+                        "users:create:all", 
+                        "users:read:all", 
+                        "users:update:all", 
+                        "users:delete:all", 
+                        "threads:read:public:all",
                     ], inherits=["user"]
                 ).model_dump()
             )
@@ -85,8 +86,31 @@ class MongoManager:
                 Role(
                     name="user", 
                     rights=[
-                        "users:update:self", 
-                        "users:delete:self"
+                        "users:update:own", 
+                        "users:delete:own",
+                        "posts:create:own",
+                        "posts:read:all",
+                        "posts:update:own",
+                        "posts:delete:own",
+                        "comments:create:own",
+                        "comments:read:all",
+                        "comments:update:own",
+                        "comments:delete:own",
+                        "likes:create:own",
+                        "likes:delete:own",
+                        "dislikes:create:own",
+                        "dislikes:read:all",
+                        "dislikes:delete:own",
+                        "threads:create:own",
+                        "threads:read:public:all",
+                        "threads:update:own",
+                        "threads:delete:own",
+                        "interests:create:own",
+                        "interests:read:all",
+                        "interests:update:own",
+                        "interests:delete:own",
+                        "keys:create:own",
+                        "keys:read:all",
                     ]
                 ).model_dump()
             )
@@ -95,9 +119,9 @@ class MongoManager:
         # Create default a default admin if it doesn't exist
         existing_user = await self.db.users.find_one({"username": "admin"})
         if existing_user is None:
-            from ..auth import get_password_hash
+            from ...security.auth import get_password_hash
             self.db.users.insert_one(
-                User(
+                UserModel(
                     uuid = generate_uuid(),
                     role = "admin",
                     username = "admin",

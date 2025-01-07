@@ -6,9 +6,9 @@ from pydantic import EmailStr, UUID5
 from jose import JWTError, jwt
 
 
-from .utils.config import Settings
+from ..utils.config import Settings
 from .models import User
-from . import mongodb
+from .. import mongodb
 
 
 SECRET_KEY = Settings.JWT_SECRET_KEY
@@ -130,12 +130,12 @@ def current_user_likes(*args):
     Get the current user from the token and check if it corresponds to the conditions (a list of conditions shema / types of users).
     """
         
-    from . import main_logger
+    from .. import main_logger
     main_logger.warning(f"current_user_likes args : {args}")
 
     async def process_likes(user: User = Depends(current_user)) -> User | None:
         
-        from . import main_logger
+        from .. import main_logger
         main_logger.warning(f"current_user_likes args : {args}")
         
         for conditions in args:

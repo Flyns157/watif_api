@@ -8,7 +8,6 @@ from fastapi import (
 )
 from pymongo import ReturnDocument
 from datetime import datetime
-from pathlib import Path
 
 from ..models.post import (
     PostCreate,
@@ -17,7 +16,8 @@ from ..models.post import (
     PostCollection,
     Post,
 )
-from ..auth import (
+from ..security.auth import (
+    current_user_likes,
     current_user,
     corresponds,
     NOT_AUTHORIZED_ERROR,
@@ -35,20 +35,21 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 )
 async def create_post(
     post: PostCreate = Body(...),
-    current_user=Depends(current_user),
+    current_user=Depends(
+        current_user_likes(
+            {"permission": "posts:create:all"},
+            {"permission": "posts:create:own"}
+        )),
 ):
     """
     Create a new post authored by the current user.
     """
-    post_dict = post.dict()
-    post_dict["id_author"] = current_user.uuid
+    if not post.id_author or not corresponds(current_user, permission="posts:create:all"):
+        post.id_author = current_user.uuid
 
-    try:
-        result = await mongodb.db.posts.insert_one(post_dict)
-        created_post = await mongodb.db.posts.find_one({"_id": result.inserted_id})
-        return created_post
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error creating post: {e}")
+    result = await mongodb.db.posts.insert_one(post.model_dump())
+    created_post = await mongodb.db.posts.find_one({"_id": result.inserted_id})
+    return created_post
 
 
 @router.get(
@@ -169,7 +170,7 @@ async def like_post(
 
     if current_user.uuid in post.get("likes", []):
         raise HTTPException(status_code=400, detail="Post already liked")
-
+ 
     updated_post = await mongodb.db.posts.find_one_and_update(
         {"id": id},
         {"$addToSet": {"likes": current_user.uuid}},
