@@ -1,6 +1,10 @@
-from pydantic import BaseModel, Field
-from datetime import datetime
+"""
+This module contains the models for the post and comment records.
+"""
+
 from pathlib import Path
+from datetime import datetime
+from pydantic import BaseModel, Field
 
 
 from ...utils import generate_uuid
@@ -52,7 +56,6 @@ class CommentRead(Comment):
     """
     Represent the public version of a comment record.
     """
-    ...
 
 
 class CommentCreate(Comment):
@@ -105,7 +108,6 @@ class PostRead(Post):
     """
     Represent the public version of a post record.
     """
-    ...
 
 
 class PostCreate(BaseModel):

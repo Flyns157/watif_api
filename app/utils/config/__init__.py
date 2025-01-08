@@ -1,6 +1,6 @@
-from pydantic import BaseModel
-from dotenv import load_dotenv
 import os
+import configparser
+from dotenv import load_dotenv
 
 from .modes import Mode, Stage
 
@@ -25,3 +25,10 @@ class Settings:
 
     ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL")
     ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD")
+
+
+# Créer une instance de ConfigParser
+config = configparser.ConfigParser()
+
+# Lire le fichier de configuration
+config.read('main.ini')

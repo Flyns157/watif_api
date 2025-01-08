@@ -1,6 +1,10 @@
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from datetime import datetime
+"""
+This module contains the data models for the user data.
+"""
+
 from pathlib import Path
+from datetime import datetime
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 from . import PyUUID, Date
 from ...utils import generate_uuid
@@ -178,7 +182,8 @@ class UserCollection(BaseModel):
     """
     A container holding a list of `UserRead` instances.
 
-    This exists because providing a top-level array in a JSON response can be a [vulnerability](https://haacked.com/archive/2009/06/25/json-hijacking.aspx/)
+    This exists because providing a top-level array in a JSON response can be a 
+    [vulnerability](https://haacked.com/archive/2009/06/25/json-hijacking.aspx/)
     """
 
     users: list[UserRead]

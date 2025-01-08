@@ -1,3 +1,6 @@
+"""
+This module contains the models for a thread.
+"""
 from pydantic import BaseModel, Field
 
 from ...utils import generate_uuid
@@ -19,14 +22,12 @@ class ThreadRead(Thread):
     """
     A model for reading a thread.
     """
-    ...
 
 
 class ThreadCreate(Thread):
     """
     A model for creating a thread.
     """
-    ...
 
 
 class ThreadUpdate(BaseModel):

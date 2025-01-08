@@ -1,3 +1,6 @@
+"""
+This module defines the Role model and related classes.
+"""
 from pydantic import BaseModel
 
 
@@ -13,14 +16,12 @@ class RoleRead(Role):
     """
     A class representing a role to be returned in a response.
     """
-    ...
 
 
 class RoleCreate(Role):
     """
     A class representing a role to be created in the system.
     """
-    ...
 
 
 class RoleUpdate(BaseModel):

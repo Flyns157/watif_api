@@ -1,4 +1,7 @@
-from pydantic import BaseModel, UUID5
+"""
+Interest models
+"""
+from pydantic import BaseModel
 
 
 class Interest(BaseModel):
@@ -11,13 +14,11 @@ class InterestRead(Interest):
     """
     Interest public model
     """
-    ...
 
 class InterestCreate(Interest):
     """
     Interest create model
     """
-    ...
 
 class InterestCollection(BaseModel):
     """

@@ -1,3 +1,6 @@
+"""
+Key models.
+"""
 from pydantic import BaseModel
 
 
@@ -17,7 +20,6 @@ class KeyCreate(Key):
     """
     A key creation model.
     """
-    ...
 
 class KeyCollection(BaseModel):
     """
