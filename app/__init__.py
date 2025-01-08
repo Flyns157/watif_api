@@ -23,7 +23,7 @@ main_logger = logging.getLogger(__name__)
 async def get_logger(name: str) -> logging.Logger:
     return main_logger.getChild(name)
 
-from .database.mongodb import MongoManager
+from .data.databases.mongodb import MongoManager
 
 mongodb = MongoManager()
 

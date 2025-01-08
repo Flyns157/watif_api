@@ -17,7 +17,7 @@ class User(BaseModel):
     email: EmailStr
     name: str
     surname: str
-    pp: str | Path = r"images/pp/default-avatar-icon-of-social-media-user-vector.jpg"
+    pp: str | Path = r"pp/default-avatar-icon-of-social-media-user-vector.jpg"
     birth_date: Date
     followed: list[PyUUID] | None
     blocked: list[PyUUID] | None
@@ -37,7 +37,7 @@ class User(BaseModel):
                 "email": "johndoe@example.com",
                 "name": "John",
                 "surname": "Doe",
-                "pp": "images/pp/default-avatar-icon-of-social-media-user-vector.jpg",
+                "pp": "pp/default-avatar-icon-of-social-media-user-vector.jpg",
                 "birth_date": "1990-01-01",
                 "followed": [],
                 "blocked": [],
@@ -62,7 +62,7 @@ class UserRead(BaseModel):
     email: EmailStr
     name: str
     surname: str
-    pp: str | Path = r"images/pp/default-avatar-icon-of-social-media-user-vector.jpg"
+    pp: str | Path = r"pp/default-avatar-icon-of-social-media-user-vector.jpg"
     birth_date: Date
     followed: list[PyUUID] | None
     blocked: list[PyUUID] | None
@@ -81,7 +81,7 @@ class UserRead(BaseModel):
                 "email": "johndoe@example.com",
                 "name": "John",
                 "surname": "Doe",
-                "pp": "images/pp/default-avatar-icon-of-social-media-user-vector.jpg",
+                "pp": "pp/default-avatar-icon-of-social-media-user-vector.jpg",
                 "birth_date": "1990-01-01",
                 "followed": [],
                 "blocked": [],
@@ -106,7 +106,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     name: str
     surname: str
-    pp: str | Path = r"images/pp/default-avatar-icon-of-social-media-user-vector.jpg"
+    pp: str | Path = r"pp/default-avatar-icon-of-social-media-user-vector.jpg"
     birth_date: Date
     followed: list[PyUUID] | None = None
     blocked: list[PyUUID] | None = None
@@ -123,7 +123,7 @@ class UserCreate(BaseModel):
                 "email": "johndoe@example.com",
                 "name": "John",
                 "surname": "Doe",
-                "pp": "images/pp/default-avatar-icon-of-social-media-user-vector.jpg",
+                "pp": "pp/default-avatar-icon-of-social-media-user-vector.jpg",
                 "birth_date": "1990-01-01",
                 "followed": [],
                 "blocked": [],
@@ -161,7 +161,7 @@ class UserUpdate(BaseModel):
                 "email": "newjohndoe@example.com",
                 "name": "John",
                 "surname": "Doe",
-                "pp": "images/pp/default-avatar-icon-of-social-media-user-vector.jpg",
+                "pp": "pp/default-avatar-icon-of-social-media-user-vector.jpg",
                 "birth_date": "1990-01-01",
                 "followed": [],
                 "blocked": [],
