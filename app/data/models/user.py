@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import PyUUID, Date
+from ...utils import generate_uuid
 
 
 class User(BaseModel):
@@ -10,8 +11,8 @@ class User(BaseModel):
     Container for a single user record.
     """
 
-    uuid: PyUUID
-    role: str
+    uuid: PyUUID = Field(default_factory=generate_uuid)
+    role: str = "user"
     username: str
     hashed_password: str | bytes
     email: EmailStr
@@ -56,7 +57,7 @@ class UserRead(BaseModel):
     Container for a single user record returned by the API.
     """
 
-    uuid: PyUUID
+    uuid: PyUUID = Field(default_factory=generate_uuid)
     role: str
     username: str
     email: EmailStr
@@ -100,7 +101,8 @@ class UserCreate(BaseModel):
     Container for a single user record used to create a new user.
     """
 
-    uuid: PyUUID = None
+    uuid: PyUUID = Field(default_factory=generate_uuid)
+    role: str = "user"
     username: str
     password: str | bytes
     email: EmailStr

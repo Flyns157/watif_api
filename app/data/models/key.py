@@ -1,4 +1,4 @@
-from pydantic import BaseModel, UUID5
+from pydantic import BaseModel
 
 
 class Key(BaseModel):

@@ -39,7 +39,7 @@ from .interest import (
     InterestCreate,
 )
 from .key import (
-    key,
+    Key,
     Key as KeyModel, 
     KeyRead, 
     KeyCollection, 

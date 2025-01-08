@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from ..utils import generate_uuid
+from ...utils import generate_uuid
 from . import PyUUID
 
 class Thread(BaseModel):

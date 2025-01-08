@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 
 
-from ..utils import generate_uuid
+from ...utils import generate_uuid
 from . import PyUUID
 
 

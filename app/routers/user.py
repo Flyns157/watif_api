@@ -49,9 +49,6 @@ async def create_user(
     """
     Insert a new user record with a hashed password.
     """
-    if user.uuid is None:
-        user.uuid = str(generate_uuid())
-
     user_dict = user.model_dump()
     user_dict["hashed_password"] = get_password_hash(user_dict.pop("password"))
 
@@ -62,7 +59,9 @@ async def create_user(
         user_dict["role"] = "user"
 
     try:
-        new_user = await mongodb.db.users.insert_one(user_dict)
+        from ..data.transactions.mongodb import User
+        new_user = User(**user_dict)._save()
+
     except Exception:
         for field in ("username", "email", "uuid"):
             if field in user_dict and (user := await mongodb.db.users.find_one({field: user_dict[field]})) is not None:

@@ -37,5 +37,4 @@ services:
 
 volumes:
   mongo-data:
-      driver: local
   neo4j-data:
