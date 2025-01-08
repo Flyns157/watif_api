@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Post Images</title>
+</head>
+<body>
+
+<h1>Post Images</h1>
+<div id="post-images-container"></div>
+
+<script>
+    async function loadImages(postId) {
+        try {
+            const response = await fetch(`http://localhost:8080/api/posts/${postId}/images`);
+            if (response.ok) {
+                const images = await response.json(); // Read the JSON response, list of Base64 strings
+
+                const container = document.getElementById("post-images-container");
+                container.innerHTML = ""; // Clear the container
+
+                // Iterate over all images and display them
+                images.forEach((imageBase64, index) => {
+                    const imgElement = document.createElement("img");
+                    imgElement.src = `data:image/jpeg;base64,${imageBase64}`;
+                    imgElement.alt = `Post Image ${index + 1}`;
+                    imgElement.style.width = "300px";
+                    imgElement.style.margin = "10px";
+                    container.appendChild(imgElement);
+                });
+            } else {
+                console.error("Images not found");
+            }
+        } catch (error) {
+            console.error("Error loading images", error);
+        }
+    }
+
+    // Call the method to load images for a specific post
+    loadImages("67370f7a3cd5185271a68cdf");
+</script>
+
+</body>
+</html>

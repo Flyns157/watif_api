@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Afficher Avatar</title>
+</head>
+<body>
+
+<h1>Avatar de l'utilisateur</h1>
+<img id="user-avatar" alt="Avatar utilisateur" />
+
+<script>
+    async function loadAvatar(userId) {
+        try {
+            const response = await fetch(`http://localhost:8080/api/users/${userId}/pp`);
+            if (response.ok) {
+                const blob = await response.blob();
+
+                document.getElementById("user-avatar").src = URL.createObjectURL(blob);
+            } else {
+                console.error("Erreur: Image non trouvée.");
+            }
+        } catch (error) {
+            console.error("Erreur lors du chargement de l'avatar:", error);
+        }
+    }
+
+    // Call the function to load the avatar for a specific user
+    loadAvatar("6737026d1bfca0563a9350c8");
+</script>
+
+</body>
+</html>
