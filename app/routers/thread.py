@@ -9,7 +9,7 @@ from fastapi import (
 from pymongo import ReturnDocument
 from datetime import datetime
 
-from ..models.thread import (
+from ..data.models.thread import (
     ThreadCreate, 
     ThreadRead, 
     ThreadUpdate, 

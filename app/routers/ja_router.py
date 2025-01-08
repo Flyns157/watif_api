@@ -4,8 +4,8 @@ This file contains the API routes for Jean-Alexis Recommendation Engine.
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.security import OAuth2PasswordBearer
 
-from ..core.Recommender.ja_engine import JA_engine
-from ..database import get_database
+from ..services.Recommender.ja_engine import JA_engine
+from ..data.databases import get_database
 from ..utils.config import Config
 
 from .. import main_logger

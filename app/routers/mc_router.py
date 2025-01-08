@@ -3,8 +3,8 @@ This file contains the API routes for the Monte Carlo-based recommendation engin
 """
 from fastapi import APIRouter, HTTPException, Query
 
-from ..core.Recommender.mc_engine import MC_engine
-from ..database import get_database
+from ..services.Recommender.mc_engine import MC_engine
+from ..data.databases import get_database
 from .. import main_logger
 
 

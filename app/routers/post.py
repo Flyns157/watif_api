@@ -9,7 +9,7 @@ from fastapi import (
 from pymongo import ReturnDocument
 from datetime import datetime
 
-from ..models.post import (
+from ..data.models.post import (
     PostCreate,
     PostRead,
     PostUpdate,

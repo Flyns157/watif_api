@@ -12,7 +12,7 @@ from datetime import datetime
 from pydantic import UUID5
 from pathlib import Path
 
-from ..models.user import (
+from ..data.models.user import (
     UserCreate,
     UserRead,
     UserUpdate,

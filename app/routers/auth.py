@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 
 from ..security.auth import authenticate_user, create_access_token, current_user
-from ..models import UserRead, Token
+from ..data.models import UserRead, Token
 from ..utils.config import Settings
 
 

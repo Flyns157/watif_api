@@ -7,7 +7,7 @@ from jose import JWTError, jwt
 
 
 from ..utils.config import Settings
-from .models import User
+from ..data.models import User
 from .. import mongodb
 
 

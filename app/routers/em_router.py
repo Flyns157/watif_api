@@ -4,8 +4,8 @@ This file contains the API routes for the EM-based (embedding) recommendation en
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 
-from ..core.Recommender.em_engine import EM_engine
-from ..database import get_database
+from ..services.Recommender.em_engine import EM_engine
+from ..data.databases import get_database
 from .. import main_logger
 
 

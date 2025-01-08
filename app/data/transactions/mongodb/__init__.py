@@ -132,9 +132,9 @@ def generate_crud_classes(base_module, excluded_files=None):
                 # Génère une nouvelle classe CRUD
                 crud_class_name = name[:-5]  # Supprime 'Model' du nom
                 crud_class = type(
-                    crud_class_name,  # Nom de la classe
+                    crud_class_name,       # Nom de la classe
                     (cls, BaseModelCRUD),  # Hérite de la classe modèle et de BaseModelCRUD
-                    {}  # Pas d'attributs supplémentaires pour le moment
+                    {}                     # Pas d'attributs
                 )
                 crud_classes[crud_class_name] = crud_class
 
@@ -143,7 +143,7 @@ def generate_crud_classes(base_module, excluded_files=None):
 
 # Génération des classes CRUD
 try:
-    from ... import models  # Remplacez par le chemin réel du module
+    from ... import models
     generated_classes = generate_crud_classes(
         models,
         excluded_files=[]
