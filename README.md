@@ -1,41 +1,36 @@
 # Maquette d'une API RESTful en Python avec FastAPI
+
 Ce projet est un projet de maquettage d'une API RESTful en Python avec FastAPI scalable verticalement et horizontalement doublé d'une facilité d'utilisation.
 
 ## Structure du projet
 
 ```
 └── 📁watif
-    └── 📁.venv
     └── 📁app
         └── __init__.py
         └── __main__.py
-        └── auth.py
-        └── 📁core
-            └── 📁ImgGen
-            └── 📁Recommender
+        └── 📁data
+            └── 📁databases
                 └── __init__.py
-                └── em_engine.py
-                └── 📁embedding
+                └── mongodb.py
+                └── neo4j.py
+                └── synchronizer.py
+            └── 📁models
+                └── __init__.py
+                └── .models.puml
+                └── interest.py
+                └── key.py
+                └── post.py
+                └── role.py
+                └── thread.py
+                └── token.py
+                └── user.py
+            └── 📁transactions
+                └── 📁mongodb
                     └── __init__.py
-                    └── mc_core.py
-                └── ja_engine.py
-                └── mc_engine.py
-                └── README.md
-        └── 📁database
-            └── __init__.py
-            └── mongodb.py
-            └── neo4j.py
-            └── synchronizer.py
-        └── 📁models
-            └── __init__.py
-            └── interest.py
-            └── key.py
-            └── models.puml
-            └── post.py
-            └── role.py
-            └── thread.py
-            └── token.py
-            └── user.py
+                └── 📁neo4j
+                    └── __init__.py
+                └── user.py
         └── 📁routers
             └── __init__.py
             └── auth.py
@@ -45,37 +40,49 @@ Ce projet est un projet de maquettage d'une API RESTful en Python avec FastAPI s
             └── post.py
             └── thread.py
             └── user.py
-        └── 📁service
+        └── 📁security
+            └── auth.py
+            └── security.conf
+        └── 📁services
+            └── 📁ImgGen
+                └── genimg.conf
+            └── 📁Recommender
+                └── __init__.py
+                └── em_engine.py
+                └── 📁embedding
+                    └── __init__.py
+                    └── mc_core.py
+                └── ja_engine.py
+                └── mc_engine.py
+                └── README.md
+                └── recommender.conf
         └── 📁utils
             └── __init__.py
             └── 📁config
                 └── __init__.py
+                └── main.conf
                 └── modes.py
-            └── 📁exceptions
-    └── 📁configs
-        └── main.conf
-        └── recommendation.conf
+            └── exceptions.py
     └── 📁docker
         └── Dockerfile.dev
         └── Dockerfile.prod
+        └── init-mongo.js
     └── 📁storage
         └── 📁images
-            └── 📁pp
-                └── default-avatar-icon-of-social-media-user-vector.jpg
+        └── 📁pp
+            └── default-avatar-icon-of-social-media-user-vector.jpg
     └── 📁tests
         └── __main__.py
+        └── main.py
+        └── test.py
     └── .dockerignore
     └── .env
     └── .env.example
     └── .gitignore
-    └── app.log
     └── docker-compose.yml
     └── gitlab-ci.yml
-    └── init-mongo.js
     └── LICENCE
-    └── main.py
-    └── README
+    └── README.md
     └── requirements.in
     └── setup.py
-    └── test.py
 ```
